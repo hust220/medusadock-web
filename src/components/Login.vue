@@ -1,6 +1,6 @@
 <template>
   <el-dialog title="Login" :visible="visible" @update:visible="updateVisible">
-    <el-form @keyup.enter="submit" :model="form">
+    <el-form @keyup.enter.native="submit" :model="form">
       <el-form-item label="User Name" label-width="150">
         <el-input v-model="form.username" auto-complete="off"></el-input>
       </el-form-item>

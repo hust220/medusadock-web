@@ -1,80 +1,55 @@
 <template>
 <div class="index">
-  <el-form ref="form" :model="form" label-width="150px" @keyup.enter="onSubmit" >
-    <el-form-item label="Email Address" v-if="!user">
+  <el-steps :active="step" finish-status="success">
+    <el-step title="Select Receptor"></el-step>
+    <el-step title="Select Ligand"></el-step>
+    <el-step title="Set Binding Site"></el-step>
+    <el-step title="Submit"></el-step>
+  </el-steps>
+
+  <div id="input-area" style="height: 500px">
+    <div v-show="step<3">
+      <template v-if="step===0">
+        <div class="label">Please <el-button type='text'>upload the structure</el-button> or <el-button type='text'>input the PDB ID</el-button> of the receptor.</div>
+        <input type="file" ref="receptor_pdb" @change="showReceptor($event)"><i class="prompt">Format: .pdb</i>
+      </template>
+
+      <template v-if="step===1">
+        <div class="label">Please upload the ligand structure.</div>
+        <input type="file" ref="ligand_pdb" @change="showLigand($event)"><i class="prompt">Format: .mol2</i>
+      </template>
+
+      <template v-if="step===2">
+        <div class="label">Please select the binding site.</div>
+        <input type="file" ref="binding_site" @change="showBindingSite($event)"><i class="prompt">Format: .mol2</i>
+      </template>
+
+      <div style="position:relative">
+        <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
+        <div id="viewport"></div>
+      </div>
+
+    </div>
+
+    <div v-show="step===3" style="height: 500px">
+      <div class="label" v-if="!user">Email Address</div>
       <el-input v-model="form.email" style="width: 400px"></el-input>
-    </el-form-item>
 
-    <el-form-item label="Receptor">
-      <input type="file" ref="receptor_pdb" @change="showReceptor($event)">
-    </el-form-item>
-
-    <el-form-item label="Ligand">
-      <input type="file" ref="ligand_pdb" @change="showLigand($event)">
-    </el-form-item>
-
-    <el-form-item label="Binding Site">
-      <input type="file" ref="binding_site">
-    </el-form-item>
-
-    <el-form-item label="Number of rounds">
+      <div class="label">Number of rounds</div>
       <el-input v-model="form.num" style="width: 150px"></el-input>
-    </el-form-item>
 
-    <el-form-item label="">
-      <a href="#" @click.prevent="show_options^=true">{{show_options?'Hide':'Show'}} options</a>
-    </el-form-item>
-
-    <!--
-    <el-form-item label="Allow ROTAMER mode of ligand" v-show="show_options">
-      <el-switch v-model="form.allow_rotamer"></el-switch>
-    </el-form-item>
-
-    <el-form-item label="Perform backrub minimization" v-show="show_options">
-      <el-switch v-model="form.perform_backrub"></el-switch>
-    </el-form-item>
-    -->
-
-    <!--
-    <el-form-item label="Potential type" v-show="show_options">
-      <el-select v-model="form.potential" placeholder="Potential Type">
-        <el-option
-          v-for="item in potential_options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
-    </el-form-item>
-    -->
-
-    <el-form-item label="Constraints" v-show="show_options">
+      <div class="label">Constraints</div>
       <el-input type="textarea" :rows="5" v-model="form.constraints"></el-input>
-    </el-form-item>
 
-    <el-form-item label="Cutoff" v-show="show_options">
+      <div class="label">Cutoff</div>
       <el-input v-model="form.cutoff" style="width: 150px"></el-input>
-    </el-form-item>
+    </div>
+  </div>
 
-    <!--
-    <el-form-item label="Number of poses to explore" v-show="show_options">
-      <el-input v-model="form.num_poses"></el-input>
-    </el-form-item>
-    -->
-
-    <!--
-    <el-form-item label="Seed" v-show="show_options">
-      <el-input v-model="form.seed"></el-input>
-    </el-form-item>
-    -->
-
-    <el-form-item>
-      <el-button @click="onSubmit" type="primary">Submit</el-button>
-      <el-button>Cancel</el-button>
-    </el-form-item>
-  </el-form>
-
-  <div id="viewport" style="width:800px; height:600px;"></div>
+  <el-button v-if="step>0" style="float: left; margin-top: 12px;" @click="prev" icon="el-icon-arrow-left">Prev</el-button>
+  <el-button v-if="(step==0&&ngl.receptor)||(step==1&&ngl.ligand)||(step==2&&ngl.bindingSite)" type="primary" style="float: right; margin-top: 12px;" @click="next">Next<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+  <el-button v-if="step>=3" type="success" style="float: right; margin-top: 12px;" @click="submit">Submit<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+  <div style="clear: both"></div>
 
   <el-dialog :visible.sync="show_dialog" width="30%">
     <span>Submitted successfully!</span>
@@ -98,10 +73,16 @@ export default {
   name: 'Index',
   data () {
     return {
+      showCover: false,
+      step: 0,
+      receptorLabel: 'Please upload the receptor structure.',
+      ligandLabel: 'Please upload the ligand structure.',
+      bindingSiteLabel: 'Please select the binding site.',
       ngl: {
         stage: '',
         receptor: '',
-        ligand: ''
+        ligand: '',
+        bindingSite: ''
       },
       show_dialog: false,
       show_options: false,
@@ -126,10 +107,19 @@ export default {
     }
   },
   methods: {
+    next () {
+      var v = this
+      v.step += 1
+    },
+    prev () {
+      var v = this
+      v.step -= 1
+    },
     showReceptor (e) {
       let v = this
       let f = e.target.files[0]
 
+      v.showCover = true
       console.log('Loading receptor...')
       v.ngl.stage.getComponentsByName(v.ngl.receptor).forEach(function (c) {
         v.ngl.stage.removeComponent(c)
@@ -138,7 +128,19 @@ export default {
 
       v.ngl.stage.loadFile(f, { ext: 'pdb' }).then(function (comp) {
         comp.addRepresentation('surface', { multipleBond: true })
-        v.ngl.stage.autoView()
+        comp.autoView()
+        v.showCover = false
+//        v.ngl.stage.autoView()
+//        v.ngl.stage.signals.clicked.add(function (pickingProxy) {
+//          console.log(pickingProxy ? pickingProxy.getLabel() : 'nothing')
+//        })
+        v.ngl.stage.mouseControls.add('drag-left', function (stage, x, y) {
+//          var o = v.ngl.stage.mouseObserver
+//          var p = v.ngl.stage.pickingControls.pick(o.down.x, o.down.y).component
+//          var center = p.getCenter()
+//          p.setPosition([center.x + x / 10.0, center.y + y / 10.0, center.z + 0])
+          console.log(v.ngl.stage.viewerControls.position)
+        })
       })
     },
 
@@ -147,6 +149,7 @@ export default {
       let f = e.target.files[0]
 
       console.log('Loading ligand...')
+      v.showCover = true
       v.ngl.stage.getComponentsByName(v.ngl.ligand).forEach(function (c) {
         v.ngl.stage.removeComponent(c)
       })
@@ -154,11 +157,40 @@ export default {
 
       v.ngl.stage.loadFile(f, { ext: 'mol2' }).then(function (comp) {
         comp.addRepresentation('ball+stick', { multipleBond: true })
-        v.ngl.stage.autoView()
+        v.showCover = false
       })
     },
 
-    onSubmit () {
+    showBindingSite (e) {
+      let v = this
+      let f = e.target.files[0]
+
+      console.log('Loading ligand...')
+      v.showCover = true
+      v.ngl.stage.getComponentsByName(v.ngl.bindingSite).forEach(function (c) {
+        v.ngl.stage.removeComponent(c)
+      })
+      v.ngl.bindingSite = f.name
+
+      v.ngl.stage.loadFile(f, { ext: 'mol2' }).then(function (comp) {
+        var shape = new NGL.Shape('shape')
+        var center = comp.getCenter()
+        shape.addSphere([center.x, center.y, center.z], [1, 0, 0], 1)
+//        var sphereBuffer = new NGL.SphereBuffer({
+//          position: comp.getCenter(),
+//          color: new Float32Array([1, 0, 0]),
+//          radius: new Float32Array([1])
+//        })
+//        shape.addBuffer(sphereBuffer)
+        var shapeComp = v.ngl.stage.addComponentFromObject(shape)
+        shapeComp.addRepresentation('buffer')
+
+//        comp.addRepresentation('ball+stick', { multipleBond: true })
+        v.showCover = false
+      })
+    },
+
+    submit () {
       let v = this
       let formData = new FormData()
       for (let i in v.form) {
@@ -199,8 +231,45 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 
+i.prompt {
+  font-size: 12px;
+}
+
 .el-form-item {
   margin-bottom: 3px;
+}
+
+#input-area {
+  margin-top: 10px;
+}
+
+.label {
+  font-size: 14px;
+  height: 40px;
+  line-height: 40px;
+  vertical-align: middle;
+}
+
+#viewport {
+  width: 600px;
+  height: 400px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#cover {
+  font-size: 30px;
+  width: 600px;
+  height: 400px;
+  line-height: 400px;
+  vertical-align: middle;
+  text-align: center;
+  color: rgb(180, 188, 204);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 99;
 }
 
 </style>

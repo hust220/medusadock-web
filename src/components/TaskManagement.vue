@@ -6,11 +6,21 @@
         <a :href="'#/Task/'+scope.row.id">{{ scope.row.id }}</a>
       </template>
     </el-table-column>
-    <el-table-column prop="userid" label="User ID"></el-table-column>
+    <el-table-column prop="userid" label="User ID">
+      <template slot-scope="scope">
+        {{scope.row.userid==='0' ? 'Guest' : scope.row.userid}}
+      </template>
+    </el-table-column>
     <el-table-column prop="tsubmit" label="Submit Time"></el-table-column>
     <el-table-column prop="tprocess" label="Process Time"></el-table-column>
     <el-table-column prop="tfinish" label="Finish Time"></el-table-column>
-    <el-table-column prop="status" label="Status"></el-table-column>
+    <el-table-column prop="status" label="Status">
+      <template slot-scope="scope">
+        <div v-html="queuedStatus" v-if="scope.row.status==='queued'"></div>
+        <div v-html="finishedStatus(scope.row.id)" v-else-if="scope.row.status==='finished'"></div>
+        <div v-html="runningStatus" v-else></div>
+      </template>
+    </el-table-column>
   </el-table>
 </div>
 </template>
@@ -25,10 +35,15 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
+      queuedStatus: '<i>queued</i>',
+      runningStatus: '<i style="margin-left: 10px" class="el-icon-loading"></i>',
       tasks: []
     }
   },
   methods: {
+    finishedStatus (id) {
+      return '<a href="#/Task/' + id + '"><i style="color:#878d99; margin-left: 10px;" class="view el-icon-view"></i></a>'
+    },
     check () {
       var v = this
       axios.get('http://redshift.med.unc.edu/medusadock/actions/check.php').then(response => {
