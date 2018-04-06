@@ -10,22 +10,33 @@
   <div id="input-area" style="height: 500px">
     <div v-show="step<3">
       <template v-if="step===0">
-        <div class="label">Please <el-button type='text'>upload the structure</el-button> or <el-button type='text'>input the PDB ID</el-button> of the receptor.</div>
-        <input type="file" ref="receptor_pdb" @change="showReceptor($event)"><i class="prompt">Format: .pdb</i>
+        <div class="label">Please
+          <el-tooltip class="item" effect="dark" content="Only '.pdb' format is supported." placement="bottom">
+            <el-button type='text' onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</el-button>
+          </el-tooltip> or
+          <el-button type='text'>input the PDB ID</el-button> of the receptor.
+        </div>
+        <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="showReceptor($event)" style="display:None;">
       </template>
 
       <template v-if="step===1">
-        <div class="label">Please upload the ligand structure.</div>
-        <input type="file" ref="ligand_pdb" @change="showLigand($event)"><i class="prompt">Format: .mol2</i>
+        <div class="label">Please
+          <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
+            <el-button type='text' onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</el-button>
+          </el-tooltip> or
+          <el-button type='text'>input the ZINC ID</el-button> of the ligand.
+        </div>
+        <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="showLigand($event)" style="display:None;">
       </template>
 
       <template v-if="step===2">
-        <div class="label">Please select the binding site.</div>
-        <input type="file" ref="binding_site" @change="showBindingSite($event)"><i class="prompt">Format: .mol2</i>
+        <div class="label">Please <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button> of the binding site.</div>
+        <input type="file" id="binding_site" ref="binding_site" @change="showBindingSite($event)" style="display:None">
       </template>
 
       <div style="position:relative">
         <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
+        <div id="structure-name" v-text="(step==0?ngl.receptor:(step==1?ngl.ligand:''))" v-if="step<3"></div>
         <div id="viewport"></div>
       </div>
 
@@ -134,12 +145,36 @@ export default {
 //        v.ngl.stage.signals.clicked.add(function (pickingProxy) {
 //          console.log(pickingProxy ? pickingProxy.getLabel() : 'nothing')
 //        })
-        v.ngl.stage.mouseControls.add('drag-left', function (stage, x, y) {
+//        v.ngl.stage.mouseControls.remove('drag-left')
+        v.ngl.stage.mouseControls.remove('drag-left-ctrl')
+        v.ngl.stage.mouseControls.add('drag-left-ctrl', function (stage, x, y) {
+          v.ngl.stage.trackballControls.panComponent(x, y)
 //          var o = v.ngl.stage.mouseObserver
-//          var p = v.ngl.stage.pickingControls.pick(o.down.x, o.down.y).component
-//          var center = p.getCenter()
-//          p.setPosition([center.x + x / 10.0, center.y + y / 10.0, center.z + 0])
-          console.log(v.ngl.stage.viewerControls.position)
+//          var p = v.ngl.stage.pickingControls
+//
+//          var downPickingProxy = p.pick(o.down.x, o.down.y)
+//          if (downPickingProxy) {
+//            var c = downPickingProxy.component
+//
+//            var position = o.position
+//            console.log([position.x, position.y, position.z])
+//            var prevPosition = o.prevPosition
+//            console.log([prevPosition.x, prevPosition.y, prevPosition.z])
+
+//            v.ngl.stage.trackballControls.component = c
+//            v.ngl.stage.trackballControls.panComponent(x, y)
+
+//            const scaleFactor = this.controls.getCanvasScaleFactor(z)
+//            tmpPanVector.set(x, y, 0)
+//            tmpPanVector.multiplyScalar(this.panSpeed * scaleFactor)
+//
+//            tmpPanMatrix.extractRotation(this.component.transform)
+//            tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
+//            tmpPanMatrix.getInverse(tmpPanMatrix)
+//            tmpPanVector.applyMatrix4(tmpPanMatrix)
+//            this.component.position.add(tmpPanVector)
+//            this.component.updateMatrix()
+//          }
         })
       })
     },
@@ -256,6 +291,16 @@ i.prompt {
   position: absolute;
   left: 0;
   top: 0;
+}
+
+#structure-name {
+  font-size: 16px;
+  color: rgb(180, 188, 204);
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 10px;
+  z-index: 98;
 }
 
 #cover {
