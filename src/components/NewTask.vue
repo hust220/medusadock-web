@@ -24,7 +24,7 @@
           </el-popover>
           <el-button type='text' v-popover:popover-pdbid>input the PDB ID</el-button> of the receptor.
         </div>
-        <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="showReceptor($event)" style="display:None;">
+        <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="uploadReceptor($event)" style="display:None;">
       </div>
 
       <div v-show="step===1">
@@ -42,7 +42,7 @@
           </el-popover>
           <el-button type='text' v-popover:popover-zincid>input the ZINC ID</el-button> of the ligand.
         </div>
-        <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="showLigand($event)" style="display:None;">
+        <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="uploadLigand($event)" style="display:None;">
       </div>
 
       <div v-show="step===2">
@@ -151,40 +151,6 @@ export default {
       var v = this
       v.step -= 1
     },
-    fetchLigandFromZinc () {
-      var v = this
-      var m = v.zincid.match(/(zinc)?0*(\d+)/i)
-      v.zincid = m[2]
-      v.showCover = true
-      console.log('Loading Ligand...')
-      v.ngl.stage.removeComponent(v.ngl.ligand)
-      v.ngl.stage.loadFile(`http://redshift.med.unc.edu/medusadock/actions/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
-        v.ngl.ligand = comp
-        comp.addRepresentation('ball+stick', { multipleBond: true })
-        v.checkRenderStatus(function () {
-          comp.autoView()
-          v.showCover = false
-        })
-      })
-    },
-    fetchReceptorFromPdb () {
-      let v = this
-      v.showPdbIdInput = false
-
-      v.showCover = true
-      console.log('Loading receptor...')
-      v.ngl.stage.removeComponent(v.ngl.receptor)
-      v.ngl.stage.removeComponent(v.ngl.bindingSite)
-      v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
-        v.ngl.receptor = comp
-        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
-        v.checkRenderStatus(function () {
-          comp.autoView()
-          v.showCover = false
-          console.log(v.receptorPdb())
-        })
-      })
-    },
     checkRenderStatus (cb) {
       var v = this
       setTimeout(function () {
@@ -197,7 +163,7 @@ export default {
         }
       }, 500)
     },
-    showReceptor (e) {
+    uploadReceptor (e) {
       let v = this
       let f = e.target.files[0]
 
@@ -215,7 +181,25 @@ export default {
       })
     },
 
-    showLigand (e) {
+    fetchReceptorFromPdb () {
+      let v = this
+      v.showPdbIdInput = false
+
+      v.showCover = true
+      console.log('Loading receptor...')
+      v.ngl.stage.removeComponent(v.ngl.receptor)
+      v.ngl.stage.removeComponent(v.ngl.bindingSite)
+      v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
+        v.ngl.receptor = comp
+        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
+        v.checkRenderStatus(function () {
+          comp.autoView()
+          v.showCover = false
+        })
+      })
+    },
+
+    uploadLigand (e) {
       let v = this
       let f = e.target.files[0]
 
@@ -226,6 +210,24 @@ export default {
         comp.addRepresentation('ball+stick', { multipleBond: true })
         v.ngl.ligand = comp
         v.checkRenderStatus(function () {
+          comp.autoView()
+          v.showCover = false
+        })
+      })
+    },
+
+    fetchLigandFromZinc () {
+      var v = this
+      var m = v.zincid.match(/(zinc)?0*(\d+)/i)
+      v.zincid = m[2]
+      v.showCover = true
+      console.log('Loading Ligand...')
+      v.ngl.stage.removeComponent(v.ngl.ligand)
+      v.ngl.stage.loadFile(`http://redshift.med.unc.edu/medusadock/actions/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
+        v.ngl.ligand = comp
+        comp.addRepresentation('ball+stick', { multipleBond: true })
+        v.checkRenderStatus(function () {
+          comp.autoView()
           v.showCover = false
         })
       })
@@ -359,25 +361,24 @@ export default {
       v.colorPocket()
     },
 
-    receptorPdb () {
-      let v = this
+    componentToPdb (comp) {
       let pdb = ''
       let atomNum = 0
-      let resNum = 0
-      v.ngl.receptor.structure.eachChain(function (chain) {
+      comp.structure.eachChain(function (chain) {
         chain.eachResidue(function (residue) {
           residue.eachAtom(function (atom) {
-            pdb += sprintf('%-6s%5d  %-4s%3s%2s%4d    %8.3f%8.3f%8.3f\n', 'ATOM', atomNum + 1, atom.atomname, residue.resname, chain.chainname, resNum + 1, atom.x, atom.y, atom.z)
+            pdb += sprintf('%-6s%5d  %-4s%3s%2s%4d    %8.3f%8.3f%8.3f\n', 'ATOM', atomNum + 1, atom.atomname, residue.resname, chain.chainname, residue.resno, atom.x, atom.y, atom.z)
             atomNum += 1
           })
-          resNum += 1
         })
         pdb += 'TER\n'
       })
       return pdb
     },
 
-    ligandMol2 () {
+    bindingSiteCenter () {
+      let center = this.bindingSite.getCenter()
+      return [center.x, center.y, center.z]
     },
 
     submit () {
@@ -389,9 +390,13 @@ export default {
       if (v.user) {
         formData.append('email', v.user.email)
       }
-      formData.append('receptor_pdb', this.$refs.receptor_pdb.files[0])
-      formData.append('ligand_pdb', this.$refs.ligand_pdb.files[0])
-      formData.append('binding_site', this.$refs.binding_site.files[0])
+      formData.append('receptor_pdb', v.componentToPdb(v.ngl.receptor))
+      formData.append('ligand_pdb', v.componentToPdb(v.ngl.ligand))
+      formData.append('binding_site', v.bindingSiteCenter().join(' '))
+
+//      formData.append('receptor_pdb', this.$refs.receptor_pdb.files[0])
+//      formData.append('ligand_pdb', this.$refs.ligand_pdb.files[0])
+//      formData.append('binding_site', this.$refs.binding_site.files[0])
 
       axios({
         method: 'post',
