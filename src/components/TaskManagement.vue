@@ -1,6 +1,6 @@
 <template>
 <div class="taskmanagement">
-  <el-table :data="tasks" height="800" style="width: 100%">
+  <el-table :data="tasks" stripe height="700" style="width: 100%">
     <el-table-column prop="id" label="Task ID">
       <template slot-scope="scope">
         <a :href="'#/Task/'+scope.row.id">{{ scope.row.id }}</a>
@@ -69,6 +69,10 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+.taskmanagement {
+  margin-left: 10px;
+}
 
 .el-form-item {
   margin-bottom: 3px;

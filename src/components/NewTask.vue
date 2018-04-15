@@ -1,10 +1,10 @@
 <template>
-<div class="index">
+<div class="new-task">
   <el-steps :active="step" finish-status="success">
-    <el-step title="Select Receptor"></el-step>
-    <el-step title="Select Ligand"></el-step>
-    <el-step title="Set Binding Site"></el-step>
-    <el-step title="Submit"></el-step>
+    <el-step @click.native="step=0" title="Select Receptor"></el-step>
+    <el-step @click.native="step=1" title="Select Ligand"></el-step>
+    <el-step @click.native="step=2" title="Set Binding Site"></el-step>
+    <el-step @click.native="step=3" title="Submit"></el-step>
   </el-steps>
 
   <div id="input-area" style="height: 500px">
@@ -14,15 +14,15 @@
           <el-tooltip class="item" effect="dark" content="Only '.pdb' format is supported." placement="bottom">
             <el-button type='text' onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</el-button>
           </el-tooltip> or
-          <el-popover ref="popover4" placement="bottom-start" v-model="showPdbIdInput" width="400" trigger="click">
+          <el-popover ref="popover-pdbid" placement="bottom-start" v-model="showPdbIdInput" width="400" trigger="click">
             <table>
               <tr>
                 <td><el-input v-model="pdbid" placeholder="PDB ID"></el-input></td>
-                <td><el-button type="warning" plain @click="fetchPdb">Confirm</el-button></td>
+                <td><el-button type="warning" plain @click="fetchReceptorFromPdb">Confirm</el-button></td>
               </tr>
-          </table>
+            </table>
           </el-popover>
-          <el-button type='text' v-popover:popover4>input the PDB ID</el-button> of the receptor.
+          <el-button type='text' v-popover:popover-pdbid>input the PDB ID</el-button> of the receptor.
         </div>
         <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="showReceptor($event)" style="display:None;">
       </div>
@@ -32,19 +32,27 @@
           <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
             <el-button type='text' onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</el-button>
           </el-tooltip> or
-          <el-button type='text'>input the ZINC ID</el-button> of the ligand.
+          <el-popover ref="popover-zincid" placement="bottom-start" v-model="showZincIdInput" width="400" trigger="click">
+            <table>
+              <tr>
+                <td><el-input v-model="zincid" placeholder="ZINC ID"></el-input></td>
+                <td><el-button type="warning" plain @click="fetchLigandFromZinc">Confirm</el-button></td>
+              </tr>
+            </table>
+          </el-popover>
+          <el-button type='text' v-popover:popover-zincid>input the ZINC ID</el-button> of the ligand.
         </div>
         <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="showLigand($event)" style="display:None;">
       </div>
 
       <div v-show="step===2">
-        <div class="label">Please <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button> of the binding site.</div>
-        <input type="file" id="binding_site" ref="binding_site" @change="showBindingSite($event)" style="display:None">
+        <div class="label">Please <el-button type="text" @click.native="setBindingSite">specify the position</el-button> or <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button> of the binding site.</div>
+        <input type="file" id="binding_site" ref="binding_site" @change="uploadBindingSite($event)" style="display:None">
       </div>
 
       <div style="position:relative">
         <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
-        <div id="structure-name" v-text="(step==0?ngl.receptor:(step==1?ngl.ligand:''))" v-if="step<3"></div>
+        <div id="structure-name" v-text="(step==0?ngl.receptor.name:(step==1?ngl.ligand.name:''))" v-if="step<3"></div>
         <div id="viewport"></div>
       </div>
 
@@ -85,6 +93,8 @@
 import axios from 'axios'
 import { bus } from '../bus.js'
 import * as NGL from 'ngl'
+import { Vector3, Matrix4 } from 'three'
+import { sprintf } from 'sprintf-js'
 
 axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'
 
@@ -92,8 +102,11 @@ export default {
   name: 'Index',
   data () {
     return {
+      pdbid: '',
+      zincid: '',
       showCover: false,
       showPdbIdInput: false,
+      showZincIdInput: false,
       step: 0,
       receptorLabel: 'Please upload the receptor structure.',
       ligandLabel: 'Please upload the ligand structure.',
@@ -101,8 +114,11 @@ export default {
       ngl: {
         stage: '',
         receptor: '',
+        receptorName: '',
         ligand: '',
-        bindingSite: ''
+        ligandName: '',
+        bindingSite: '',
+        receptorSurface: ''
       },
       show_dialog: false,
       show_options: false,
@@ -135,26 +151,51 @@ export default {
       var v = this
       v.step -= 1
     },
-    fetchPdb () {
+    fetchLigandFromZinc () {
+      var v = this
+      var m = v.zincid.match(/(zinc)?0*(\d+)/i)
+      v.zincid = m[2]
+      v.showCover = true
+      console.log('Loading Ligand...')
+      v.ngl.stage.removeComponent(v.ngl.ligand)
+      v.ngl.stage.loadFile(`http://redshift.med.unc.edu/medusadock/actions/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
+        v.ngl.ligand = comp
+        comp.addRepresentation('ball+stick', { multipleBond: true })
+        v.checkRenderStatus(function () {
+          comp.autoView()
+          v.showCover = false
+        })
+      })
+    },
+    fetchReceptorFromPdb () {
       let v = this
       v.showPdbIdInput = false
 
       v.showCover = true
       console.log('Loading receptor...')
-      v.ngl.stage.getComponentsByName(v.ngl.receptor).forEach(function (c) {
-        v.ngl.stage.removeComponent(c)
-      })
-      v.ngl.receptor = v.pdbid
-
+      v.ngl.stage.removeComponent(v.ngl.receptor)
+      v.ngl.stage.removeComponent(v.ngl.bindingSite)
       v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
-        comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
-        comp.autoView()
-        v.showCover = false
-        v.ngl.stage.mouseControls.remove('drag-left-ctrl')
-        v.ngl.stage.mouseControls.add('drag-left-ctrl', function (stage, x, y) {
-          v.ngl.stage.trackballControls.panComponent(x, y)
+        v.ngl.receptor = comp
+        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
+        v.checkRenderStatus(function () {
+          comp.autoView()
+          v.showCover = false
+          console.log(v.receptorPdb())
         })
       })
+    },
+    checkRenderStatus (cb) {
+      var v = this
+      setTimeout(function () {
+        var c = v.ngl.stage.tasks.count
+        console.log(c)
+        if (c !== 0) {
+          v.checkRenderStatus(cb)
+        } else {
+          cb()
+        }
+      }, 500)
     },
     showReceptor (e) {
       let v = this
@@ -162,18 +203,14 @@ export default {
 
       v.showCover = true
       console.log('Loading receptor...')
-      v.ngl.stage.getComponentsByName(v.ngl.receptor).forEach(function (c) {
-        v.ngl.stage.removeComponent(c)
-      })
-      v.ngl.receptor = f.name
-
+      v.ngl.stage.removeComponent(v.ngl.receptor)
+      v.ngl.stage.removeComponent(v.ngl.bindingSite)
       v.ngl.stage.loadFile(f, { ext: 'pdb' }).then(function (comp) {
-        comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
-        comp.autoView()
-        v.showCover = false
-        v.ngl.stage.mouseControls.remove('drag-left-ctrl')
-        v.ngl.stage.mouseControls.add('drag-left-ctrl', function (stage, x, y) {
-          v.ngl.stage.trackballControls.panComponent(x, y)
+        v.ngl.receptor = comp
+        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5, lazy: false })
+        v.checkRenderStatus(function () {
+          comp.autoView()
+          v.showCover = false
         })
       })
     },
@@ -184,44 +221,163 @@ export default {
 
       console.log('Loading ligand...')
       v.showCover = true
-      v.ngl.stage.getComponentsByName(v.ngl.ligand).forEach(function (c) {
-        v.ngl.stage.removeComponent(c)
-      })
-      v.ngl.ligand = f.name
-
+      v.ngl.stage.removeComponent(v.ngl.ligand)
       v.ngl.stage.loadFile(f, { ext: 'mol2' }).then(function (comp) {
         comp.addRepresentation('ball+stick', { multipleBond: true })
-        v.showCover = false
+        v.ngl.ligand = comp
+        v.checkRenderStatus(function () {
+          v.showCover = false
+        })
       })
     },
 
-    showBindingSite (e) {
+    setBindingSite () {
+      let v = this
+
+      v.ngl.stage.removeComponent(v.ngl.bindingSite)
+
+      var shape = new NGL.Shape('shape')
+
+      if (v.ngl.receptor) {
+        let center = v.ngl.receptor.getCenter()
+        shape.addSphere([center.x, center.y, center.z], [1, 0, 0], 1)
+      } else {
+        shape.addSphere([0, 0, 0], [1, 0, 0], 1)
+      }
+
+      v.showCover = true
+      var shapeComp = v.ngl.stage.addComponentFromObject(shape)
+      shapeComp.addRepresentation('buffer')
+      v.ngl.bindingSite = shapeComp
+
+      v.checkRenderStatus(function () {
+        v.showCover = false
+        v.colorPocket()
+      })
+    },
+
+    uploadBindingSite (e) {
       let v = this
       let f = e.target.files[0]
 
       console.log('Loading ligand...')
       v.showCover = true
-      v.ngl.stage.getComponentsByName(v.ngl.bindingSite).forEach(function (c) {
-        v.ngl.stage.removeComponent(c)
-      })
-      v.ngl.bindingSite = f.name
-
+      v.ngl.stage.removeComponent(v.ngl.bindingSite)
       v.ngl.stage.loadFile(f, { ext: 'mol2' }).then(function (comp) {
         var shape = new NGL.Shape('shape')
         var center = comp.getCenter()
         shape.addSphere([center.x, center.y, center.z], [1, 0, 0], 1)
-//        var sphereBuffer = new NGL.SphereBuffer({
-//          position: comp.getCenter(),
-//          color: new Float32Array([1, 0, 0]),
-//          radius: new Float32Array([1])
-//        })
-//        shape.addBuffer(sphereBuffer)
         var shapeComp = v.ngl.stage.addComponentFromObject(shape)
         shapeComp.addRepresentation('buffer')
+        v.ngl.bindingSite = shapeComp
 
-//        comp.addRepresentation('ball+stick', { multipleBond: true })
-        v.showCover = false
+        v.checkRenderStatus(function () {
+          v.showCover = false
+          v.colorPocket()
+        })
       })
+    },
+
+    panComponentXY (x, y) {
+      let v = this
+      const tmpPanMatrix = new Matrix4()
+      const tmpPanVector = new Vector3()
+
+      let t = v.ngl.stage.trackballControls
+
+      const scaleFactor = t.controls.getCanvasScaleFactor(0)
+      tmpPanVector.set(x, y, 0)
+      tmpPanVector.multiplyScalar(scaleFactor)
+
+      tmpPanMatrix.extractRotation(t.component.transform)
+      tmpPanMatrix.premultiply(t.viewer.rotationGroup.matrix)
+      tmpPanMatrix.getInverse(tmpPanMatrix)
+      tmpPanVector.applyMatrix4(tmpPanMatrix)
+
+      t.component.position.add(tmpPanVector)
+      t.component.updateMatrix()
+
+      v.colorPocket()
+    },
+
+    colorPocket () {
+      let v = this
+
+      if (v.ngl.receptor && v.ngl.bindingSite) {
+        let receptor = v.ngl.receptor
+        let pos = v.ngl.bindingSite.getCenter()
+
+        var dist = function (atom, pos) {
+          var x = atom.x - pos.x
+          var y = atom.y - pos.y
+          var z = atom.z - pos.z
+          return Math.sqrt(x * x + y * y + z * z)
+        }
+
+        let resList = []
+        receptor.structure.eachResidue(function (r) {
+          const count = r.atomCount
+          const offset = r.atomOffset
+          const ap = r.structure._ap
+          const end = offset + count
+
+          for (let i = offset; i < end; ++i) {
+            ap.index = i
+            if (dist(ap, pos) < 8) {
+              resList.push(r.resno)
+              break
+            }
+          }
+        })
+        console.log(resList.join(' or '))
+        var schemeId = NGL.ColormakerRegistry.addSelectionScheme([[ 'green', resList.join(' or ') ]], 'hi')
+        v.ngl.receptorSurface.setColor(schemeId)
+      }
+    },
+
+    panComponentZ (x, y) {
+      let v = this
+      const tmpPanMatrix = new Matrix4()
+      const tmpPanVector = new Vector3()
+
+      let t = v.ngl.stage.trackballControls
+
+      let r = Math.sqrt(x * x + y * y)
+      r = (y > 0 ? r : -r)
+      const scaleFactor = t.controls.getCanvasScaleFactor(0)
+      tmpPanVector.set(0, 0, r)
+      tmpPanVector.multiplyScalar(scaleFactor)
+
+      tmpPanMatrix.extractRotation(t.component.transform)
+      tmpPanMatrix.premultiply(t.viewer.rotationGroup.matrix)
+      tmpPanMatrix.getInverse(tmpPanMatrix)
+      tmpPanVector.applyMatrix4(tmpPanMatrix)
+
+      t.component.position.add(tmpPanVector)
+      t.component.updateMatrix()
+
+      v.colorPocket()
+    },
+
+    receptorPdb () {
+      let v = this
+      let pdb = ''
+      let atomNum = 0
+      let resNum = 0
+      v.ngl.receptor.structure.eachChain(function (chain) {
+        chain.eachResidue(function (residue) {
+          residue.eachAtom(function (atom) {
+            pdb += sprintf('%-6s%5d  %-4s%3s%2s%4d    %8.3f%8.3f%8.3f\n', 'ATOM', atomNum + 1, atom.atomname, residue.resname, chain.chainname, resNum + 1, atom.x, atom.y, atom.z)
+            atomNum += 1
+          })
+          resNum += 1
+        })
+        pdb += 'TER\n'
+      })
+      return pdb
+    },
+
+    ligandMol2 () {
     },
 
     submit () {
@@ -257,6 +413,16 @@ export default {
       bus.$emit('switch-router', 'NewTask')
 
       v.ngl.stage = new NGL.Stage('viewport', { backgroundColor: 'white' })
+      v.ngl.stage.mouseControls.remove('drag-left-ctrl')
+      v.ngl.stage.mouseControls.add('drag-left-ctrl', function (stage, x, y) {
+        v.panComponentXY(x, y)
+//        stage.trackballControls.panComponent(x, y)
+      })
+      v.ngl.stage.mouseControls.remove('drag-right-ctrl')
+      v.ngl.stage.mouseControls.add('drag-right-ctrl', function (stage, x, y) {
+        v.panComponentZ(x, y)
+//        stage.trackballControls.panComponent(x, y)
+      })
     })
   }
 }
@@ -264,6 +430,10 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+.new-task {
+  padding-top: 30px;
+}
 
 i.prompt {
   font-size: 12px;

@@ -14,7 +14,8 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
   state: {
-    user: ''
+    user: '',
+    view: 'fullscreen'
   },
   mutations: {
     login (state, user) {
@@ -23,6 +24,14 @@ const store = new Vuex.Store({
 
     logout (state) {
       state.user = ''
+    },
+
+    viewFullscreen (state) {
+      state.view = 'fullscreen'
+    },
+
+    viewWindow (state) {
+      state.view = 'window'
     }
   }
 })

@@ -1,30 +1,18 @@
 <template>
 <div id="app">
   <!--<img src="./assets/logo.png">-->
-  <login :visible.sync="loginVisible"></login>
-  <sign-up :visible.sync="signupVisible"></sign-up>
   <user :visible.sync="userVisible"></user>
 
-  <el-row>
-    <el-col :span="24" :offset="0">
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          <div style="float: left; margin: 13px 1px">MedusaDock</div>
-
-          <div style="float: right" v-if="user">
-            <el-button class="grey-button" type="text" @click.native="userVisible=true">{{user.username}}</el-button>
-            <el-button class="grey-button" type="text" @click.native="$store.commit('logout')">Logout</el-button>
+  <div :class="[$store.state.view==='fullscreen'?'main':'main-window']">
+    <table>
+    <tr>
+        <td class="nav">
+          <div class="nav-header">
+            <div style="font-size: 20px; float: left">MedusaDock</div>
+            <div @click="userVisible=true" style="float: right; cursor: pointer"><img width="15px" src="./assets/user.png"></div>
+            <div style="clear: both"></div>
           </div>
-
-          <div style="float: right" v-else="user">
-            <el-button class="grey-button" type="text" @click.native="signupVisible=true">Sign Up</el-button>
-            <el-button class="grey-button" type="text" @click.native="loginVisible=true">Login</el-button>
-          </div>
-
-          <div style="clear: both"></div>
-        </div>
-        <el-row>
-          <el-col :span="6" class="left-nav">
+          <div class="nav-content">
             <ul class="menu">
               <li :class="['menu-item', active=='Home'?'is-active':'']" @click="active='Home';redirect('#/Home')">
                 <i class="el-icon-menu"></i>
@@ -75,15 +63,30 @@
                 <span>Dokholyan Lab</span>
               </li>
             </ul>
+          </div>
+        </td>
+          <!--
           </el-col>
 
           <el-col :span="18">
+          -->
+        <td class="content">
+          <div v-if="$store.state.view==='fullscreen'" class="zoom" @click="$store.commit('viewWindow')"><i class="el-icon-remove-outline"></i></div>
+          <div v-if="$store.state.view==='window'" class="zoom" @click="$store.commit('viewFullscreen')"><i class="el-icon-circle-plus-outline"></i></div>
+          <div class="content-content">
             <router-view/>
+          </div>
+        </td>
+    </tr>
+  </table>
+</div>
+          <!--
           </el-col>
         </el-row> 
       </el-card>
     </el-col>
   </el-row>
+  -->
 </div>
 </template>
 
@@ -97,17 +100,10 @@ export default {
   name: 'app',
   data () {
     return {
-      loginVisible: false,
-      signupVisible: false,
       userVisible: false,
       show_submenu: false,
       active: '',
       task_id: ''
-    }
-  },
-  computed: {
-    user () {
-      return this.$store.state.user
     }
   },
   components: {
@@ -137,10 +133,13 @@ export default {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /*text-align: center;*/
-  color: #2c3e50;
-  width: 1000px;
+  /*text-align: center;
+  color: #2c3e50;*/
+  /*width: 1000px;*/
+  width: 100%;
   margin: 0px auto;
+  padding: 0px;
+  height: 100%;
 }
 
 html {
@@ -148,8 +147,13 @@ html {
 }
 
 body {
-  padding-right: 15px;
+  /*padding-right: 15px;*/
   overflow: hidden;
+  background: url(http://old.bz55.com/uploads/allimg/140729/1-140HZ92039.jpg) no-repeat 50%;
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
+  height: 100%;
 }
 
 .left-nav {
@@ -173,7 +177,7 @@ ul {
 li.menu-item {
   padding: 0 20px;
   font-size: 14px;
-  color: #2d2f33;
+  /*color: #2d2f33;*/
   height: 56px;
   line-height: 56px;
   cursor: pointer;
@@ -184,11 +188,12 @@ li.menu-item {
 }
 
 li.menu-item:hover {
-  background-color: #ecf5ff
+  /*background-color: #ecf5ff*/
 }
 
 li.menu-item.is-active {
-  color: #409EFF;
+  color: #ffd04b;
+  /*color: #409EFF;*/
 }
 
 li.menu-item * {
@@ -223,12 +228,82 @@ li.menu-item i.submenu-arrow {
     margin: 0px 0px 10px 0px;
 }
 
-.el-card__header {
+div.el-card__header {
   padding: 0px 20px;
+  /*
+  background-color: #223e4a;
+  color: white;
+  */
 }
 
 .grey-button {
   color: #5a5e66;
+}
+
+.main {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+
+.main-window {
+  width: 1000px;
+  height: 700px;
+  margin: 50px auto;
+}
+
+table {
+  height: 100%;
+  width: 100%;
+  border-collapse:collapse;
+  overflow: hidden;
+}
+
+tr {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+}
+
+.nav {
+  height: 100%;
+  width: 250px;
+  background: #2e3238;
+  color: white;
+  padding: 0px;
+  vertical-align: text-top;
+}
+
+.nav-header {
+  margin: 20px;
+  line-height: 40px;
+  vertical-align: middle;
+}
+
+.content {
+  background-color: white;
+  align: center;
+  padding: 0px;
+  overflow-y: scroll;
+  position: relative;
+}
+
+.content-content {
+  width: 720px;
+  height: 700px;
+  margin: 0px auto;
+}
+
+.zoom {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  font-size: 18px;
+  color: #878d99;
+  cursor: pointer;
+  z-index: 99;
 }
 
 </style>

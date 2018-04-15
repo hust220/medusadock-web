@@ -1,24 +1,26 @@
 <template>
 <div class="task">
-  <div>Status of Task {{id}}: {{task.status}}(<el-button type="text" @click="logVisible = true">check the log</el-button>)</div>
+  <div class="header">
+    <div>Status of Task {{id}}: {{task.status}}(<el-button type="text" @click="logVisible = true">check the log</el-button>)</div>
 
-  <div class="switch-menu">
-    <el-dropdown>
-      <span class="el-dropdown-link">
-        Model {{currentModel+1}} (Energy: {{energies[currentModel]}})<i class="el-icon-arrow-down el-icon--right"></i>
-      </span>
+    <div class="switch-menu">
+      <el-dropdown>
+        <span class="el-dropdown-link">
+          Model {{currentModel+1}} (Energy: {{energies[currentModel]}})<i class="el-icon-arrow-down el-icon--right"></i>
+        </span>
 
-      <el-dropdown-menu slot="dropdown">
-        <el-dropdown-item v-for="(energy, index) in energies" :key="index" @click.native="handleCommand(index)" >Model {{index+1}} (Energy: {{energies[index]}})</el-dropdown-item>
-      </el-dropdown-menu>
-    </el-dropdown>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item v-for="(energy, index) in energies" :key="index" @click.native="handleCommand(index)" >Model {{index+1}} (Energy: {{energies[index]}})</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </div>
+
+    <div class="download-button"><a :href="'http://redshift.med.unc.edu/medusadock/actions/task.php?item=output&suffix=pdb&id='+id">Download All Models</a></div>
+
+    <!-- <div style="text-align: center">Model {{currentModel+1}}, Energy: {{energies[currentModel]}}</div>-->
   </div>
 
-  <div class="download-button"><a :href="'http://redshift.med.unc.edu/medusadock/actions/task.php?item=output&suffix=pdb&id='+id">Download All Models</a></div>
-
-  <!-- <div style="text-align: center">Model {{currentModel+1}}, Energy: {{energies[currentModel]}}</div>-->
-
-  <div id="viewport" style="width:800px; height:600px;"></div>
+  <div id="viewport" style="width:700px; height:600px;"></div>
 
   <!--
   <div>
@@ -134,6 +136,10 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+.task .header {
+  margin: 20px;
+}
 
 .el-form-item {
   margin-bottom: 3px;
