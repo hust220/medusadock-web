@@ -1,6 +1,6 @@
 <template>
 <div class="new-task">
-  <el-steps :active="step" finish-status="success">
+  <el-steps :active="step" style="cursor: pointer" finish-status="success">
     <el-step @click.native="step=0" title="Select Receptor"></el-step>
     <el-step @click.native="step=1" title="Select Ligand"></el-step>
     <el-step @click.native="step=2" title="Set Binding Site"></el-step>
@@ -11,42 +11,67 @@
     <div v-show="step<3">
       <div v-show="step===0">
         <div class="label">Please
+          <el-button type='text' onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</el-button>
           <el-tooltip class="item" effect="dark" content="Only '.pdb' format is supported." placement="bottom">
-            <el-button type='text' onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</el-button>
-          </el-tooltip> or
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          or
           <el-popover ref="popover-pdbid" placement="bottom-start" v-model="showPdbIdInput" width="400" trigger="click">
             <table>
               <tr>
-                <td><el-input v-model="pdbid" placeholder="PDB ID"></el-input></td>
+                <td><el-input @keyup.enter.native="fetchReceptorFromPdb" ref="pdbInput" v-model="pdbid" placeholder="PDB ID"></el-input></td>
                 <td><el-button type="warning" plain @click="fetchReceptorFromPdb">Confirm</el-button></td>
               </tr>
             </table>
           </el-popover>
-          <el-button type='text' v-popover:popover-pdbid>input the PDB ID</el-button> of the receptor.
+          <el-button type='text' v-popover:popover-pdbid>input the PDB ID</el-button>
+          <el-tooltip class="item" effect="dark" content="Example: 5i3y" placement="bottom">
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          of the receptor.
         </div>
         <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="uploadReceptor($event)" style="display:None;">
       </div>
 
       <div v-show="step===1">
         <div class="label">Please
+          <el-button type='text' onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</el-button>
           <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
-            <el-button type='text' onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</el-button>
-          </el-tooltip> or
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          or
           <el-popover ref="popover-zincid" placement="bottom-start" v-model="showZincIdInput" width="400" trigger="click">
             <table>
               <tr>
-                <td><el-input v-model="zincid" placeholder="ZINC ID"></el-input></td>
+                <td><el-input @keyup.enter.native="fetchLigandFromZinc" ref="zincInput" v-model="zincid" placeholder="ZINC ID"></el-input></td>
                 <td><el-button type="warning" plain @click="fetchLigandFromZinc">Confirm</el-button></td>
               </tr>
             </table>
           </el-popover>
-          <el-button type='text' v-popover:popover-zincid>input the ZINC ID</el-button> of the ligand.
+          <el-button type='text' v-popover:popover-zincid>input the ZINC ID</el-button>
+          <el-tooltip class="item" effect="dark" content="Example: ZINC0000534" placement="bottom">
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          of the ligand.
         </div>
         <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="uploadLigand($event)" style="display:None;">
       </div>
 
       <div v-show="step===2">
-        <div class="label">Please <el-button type="text" @click.native="setBindingSite">specify the position</el-button> or <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button> of the binding site.</div>
+        <div class="label">
+          Please
+          <el-button type="text" @click.native="setBindingSite">specify the position</el-button>
+          <el-tooltip class="item" effect="dark" placement="bottom">
+            <div slot="content">Drag the red sphere in X-Y plane with left mouse while hold on the 'ctrl' key.<br>Drag the red sphere along the Z-axis with right mouse while hold on the 'ctrl' key.</div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          or
+          <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button>
+          <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          of the binding site.
+        </div>
         <input type="file" id="binding_site" ref="binding_site" @change="uploadBindingSite($event)" style="display:None">
       </div>
 
@@ -58,9 +83,11 @@
 
     </div>
 
-    <div v-show="step===3" style="height: 500px">
-      <div class="label" v-if="!user">Email Address</div>
-      <el-input v-model="form.email" style="width: 400px"></el-input>
+    <div style="position: relative" v-show="step===3">
+      <div v-if="!user">
+        <div class="label">Email Address</div>
+        <el-input v-model="form.email" style="width: 400px"></el-input>
+      </div>
 
       <div class="label">Number of rounds</div>
       <el-input v-model="form.num" style="width: 150px"></el-input>
@@ -70,13 +97,18 @@
 
       <div class="label">Cutoff</div>
       <el-input v-model="form.cutoff" style="width: 150px"></el-input>
+
+      <!--
+      <el-button v-if="step>0" style="float: left; margin-top: 12px;" @click="prev" icon="el-icon-arrow-left">Prev</el-button>
+      <el-button v-if="(step==0&&ngl.receptor)||(step==1&&ngl.ligand)||(step==2&&ngl.bindingSite)" type="primary" style="float: right; margin-top: 12px;" @click="next">Next<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+      -->
+      <div></div>
+      <div style="float: right">
+        <el-button type="success" @click="submit">Submit<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+      </div>
+      <div style="clear: both"></div>
     </div>
   </div>
-
-  <el-button v-if="step>0" style="float: left; margin-top: 12px;" @click="prev" icon="el-icon-arrow-left">Prev</el-button>
-  <el-button v-if="(step==0&&ngl.receptor)||(step==1&&ngl.ligand)||(step==2&&ngl.bindingSite)" type="primary" style="float: right; margin-top: 12px;" @click="next">Next<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-  <el-button v-if="step>=3" type="success" style="float: right; margin-top: 12px;" @click="submit">Submit<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-  <div style="clear: both"></div>
 
   <el-dialog :visible.sync="show_dialog" width="30%">
     <span>Submitted successfully!</span>
@@ -175,7 +207,7 @@ export default {
         v.ngl.receptor = comp
         v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5, lazy: false })
         v.checkRenderStatus(function () {
-          comp.autoView()
+          v.ngl.stage.autoView()
           v.showCover = false
         })
       })
@@ -193,7 +225,7 @@ export default {
         v.ngl.receptor = comp
         v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
         v.checkRenderStatus(function () {
-          comp.autoView()
+          v.ngl.stage.autoView()
           v.showCover = false
         })
       })
@@ -210,7 +242,7 @@ export default {
         comp.addRepresentation('ball+stick', { multipleBond: true })
         v.ngl.ligand = comp
         v.checkRenderStatus(function () {
-          comp.autoView()
+          v.ngl.stage.autoView()
           v.showCover = false
         })
       })
@@ -227,10 +259,12 @@ export default {
         v.ngl.ligand = comp
         comp.addRepresentation('ball+stick', { multipleBond: true })
         v.checkRenderStatus(function () {
-          comp.autoView()
+          v.ngl.stage.autoView()
           v.showCover = false
+//          console.log(v.componentToPdb(v.ngl.ligand))
         })
       })
+      v.showZincIdInput = false
     },
 
     setBindingSite () {
@@ -367,7 +401,8 @@ export default {
       comp.structure.eachChain(function (chain) {
         chain.eachResidue(function (residue) {
           residue.eachAtom(function (atom) {
-            pdb += sprintf('%-6s%5d  %-4s%3s%2s%4d    %8.3f%8.3f%8.3f\n', 'ATOM', atomNum + 1, atom.atomname, residue.resname, chain.chainname, residue.resno, atom.x, atom.y, atom.z)
+            let resname = (residue.resname === '<0>' ? 'X' : residue.resname)
+            pdb += sprintf('%-6s%5d  %-4s%3s%2s%4d    %8.3f%8.3f%8.3f\n', 'ATOM', atomNum + 1, atom.atomname, resname, chain.chainname, residue.resno, atom.x, atom.y, atom.z)
             atomNum += 1
           })
         })
@@ -377,7 +412,7 @@ export default {
     },
 
     bindingSiteCenter () {
-      let center = this.bindingSite.getCenter()
+      let center = this.ngl.bindingSite.getCenter()
       return [center.x, center.y, center.z]
     },
 
@@ -389,10 +424,31 @@ export default {
       }
       if (v.user) {
         formData.append('email', v.user.email)
+      } else if (!v.form.email) {
+        alert('Please provide the email address!')
+        return
       }
-      formData.append('receptor_pdb', v.componentToPdb(v.ngl.receptor))
-      formData.append('ligand_pdb', v.componentToPdb(v.ngl.ligand))
-      formData.append('binding_site', v.bindingSiteCenter().join(' '))
+
+      if (v.ngl.receptor) {
+        formData.append('receptor_pdb', v.componentToPdb(v.ngl.receptor))
+      } else {
+        alert('Please provide the receptor!')
+        return
+      }
+
+      if (v.ngl.ligand) {
+        formData.append('ligand_pdb', v.componentToPdb(v.ngl.ligand))
+      } else {
+        alert('Please provide the ligand!')
+        return
+      }
+
+      if (v.ngl.bindingSite) {
+        formData.append('binding_site', v.bindingSiteCenter().join(' '))
+      } else {
+        alert('Please specify the binding site!')
+        return
+      }
 
 //      formData.append('receptor_pdb', this.$refs.receptor_pdb.files[0])
 //      formData.append('ligand_pdb', this.$refs.ligand_pdb.files[0])
@@ -461,10 +517,8 @@ i.prompt {
 
 #viewport {
   width: 600px;
-  height: 400px;
-  position: absolute;
-  left: 0;
-  top: 0;
+  height: 500px;
+  margin: 0px auto;
 }
 
 #structure-name {
@@ -480,8 +534,8 @@ i.prompt {
 #cover {
   font-size: 30px;
   width: 600px;
-  height: 400px;
-  line-height: 400px;
+  height: 500px;
+  line-height: 500px;
   vertical-align: middle;
   text-align: center;
   color: rgb(180, 188, 204);

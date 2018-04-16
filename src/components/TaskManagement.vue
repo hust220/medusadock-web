@@ -17,6 +17,7 @@
     <el-table-column prop="status" label="Status">
       <template slot-scope="scope">
         <div v-html="queuedStatus" v-if="scope.row.status==='queued'"></div>
+        <div v-html="failedStatus" v-else-if="scope.row.status==='failed'"></div>
         <div v-html="finishedStatus(scope.row.id)" v-else-if="scope.row.status==='finished'"></div>
         <div v-html="runningStatus" v-else></div>
       </template>
@@ -35,7 +36,8 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
-      queuedStatus: '<i>queued</i>',
+      queuedStatus: '<i>Queued</i>',
+      failedStatus: '<i>Failed</i>',
       runningStatus: '<i style="margin-left: 10px" class="el-icon-loading"></i>',
       tasks: []
     }

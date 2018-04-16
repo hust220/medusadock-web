@@ -129,31 +129,100 @@ export default {
 </script>
 
 <style>
-#app {
+html {
+  overflow-y: scroll;
+  width: 100%;
+  height: 100%;
+  background: url(http://old.bz55.com/uploads/allimg/140729/1-140HZ92039.jpg) no-repeat 50%;
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /*text-align: center;
-  color: #2c3e50;*/
-  /*width: 1000px;*/
-  width: 100%;
-  margin: 0px auto;
-  padding: 0px;
-  height: 100%;
-}
-
-html {
-  overflow-y: scroll;
 }
 
 body {
-  /*padding-right: 15px;*/
-  overflow: hidden;
-  background: url(http://old.bz55.com/uploads/allimg/140729/1-140HZ92039.jpg) no-repeat 50%;
   margin: 0px;
   padding: 0px;
   width: 100%;
   height: 100%;
+}
+
+#app {
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.main {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+
+.main-window {
+  width: 1000px;
+  height: 600px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+table {
+  height: 100%;
+  width: 100%;
+  border-collapse:collapse;
+  overflow: hidden;
+}
+
+tr {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+}
+
+.nav {
+  height: 100%;
+  width: 250px;
+  background: #2e3238;
+  color: white;
+  padding: 0px;
+  vertical-align: text-top;
+}
+
+.nav-header {
+  margin: 20px;
+  line-height: 40px;
+  vertical-align: middle;
+}
+
+.content {
+  background-color: white;
+  align: center;
+  padding: 0px;
+  overflow-y: scroll;
+  position: relative;
+}
+
+.content-content {
+  width: 720px;
+  height: 600px;
+  margin: 0px auto;
+}
+
+.zoom {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  font-size: 18px;
+  color: #878d99;
+  cursor: pointer;
+  z-index: 99;
 }
 
 .left-nav {
@@ -238,72 +307,6 @@ div.el-card__header {
 
 .grey-button {
   color: #5a5e66;
-}
-
-.main {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-}
-
-.main-window {
-  width: 1000px;
-  height: 700px;
-  margin: 50px auto;
-}
-
-table {
-  height: 100%;
-  width: 100%;
-  border-collapse:collapse;
-  overflow: hidden;
-}
-
-tr {
-  width: 100%;
-  height: 100%;
-  margin: 0px;
-}
-
-.nav {
-  height: 100%;
-  width: 250px;
-  background: #2e3238;
-  color: white;
-  padding: 0px;
-  vertical-align: text-top;
-}
-
-.nav-header {
-  margin: 20px;
-  line-height: 40px;
-  vertical-align: middle;
-}
-
-.content {
-  background-color: white;
-  align: center;
-  padding: 0px;
-  overflow-y: scroll;
-  position: relative;
-}
-
-.content-content {
-  width: 720px;
-  height: 700px;
-  margin: 0px auto;
-}
-
-.zoom {
-  position: absolute;
-  right: 5px;
-  top: 5px;
-  font-size: 18px;
-  color: #878d99;
-  cursor: pointer;
-  z-index: 99;
 }
 
 </style>

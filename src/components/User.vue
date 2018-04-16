@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :visible="visible" @update:visible="updateVisible">
+  <el-dialog :visible="visible" width="30%" @update:visible="updateVisible">
     <div v-if="$store.state.user">
       <table>
         <tr><td width="150px">User ID:</td><td v-text="user.id"></td></tr>

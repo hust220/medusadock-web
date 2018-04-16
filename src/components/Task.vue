@@ -20,7 +20,10 @@
     <!-- <div style="text-align: center">Model {{currentModel+1}}, Energy: {{energies[currentModel]}}</div>-->
   </div>
 
-  <div id="viewport" style="width:700px; height:600px;"></div>
+  <div style="position:relative">
+    <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
+    <div id="viewport" style="width:700px; height:600px;"></div>
+  </div>
 
   <!--
   <div>
@@ -55,6 +58,7 @@ export default {
   name: 'Task',
   data () {
     return {
+      showCover: false,
       logVisible: false,
       stage: '',
       task: {},
@@ -71,6 +75,19 @@ export default {
     }
   },
   methods: {
+    checkRenderStatus (cb) {
+      var v = this
+      setTimeout(function () {
+        var c = v.stage.tasks.count
+        console.log(c)
+        if (c !== 0) {
+          v.checkRenderStatus(cb)
+        } else {
+          cb()
+        }
+      }, 500)
+    },
+
     handleCommand (command) {
       var v = this
       v.currentModel = command
@@ -96,16 +113,20 @@ export default {
 //              v.energies.push()
             }
           })
+          v.showCover = true
           v.stage.loadFile(new Blob([v.task.output], { type: 'text/plain' }), { ext: 'pdb' }).then(function (comp) {
             v.stage.comp = comp
             v.numModels = comp.structure.modelStore.count
             for (var i = 0; i < v.numModels; i++) {
-              v.receptors.push(comp.addRepresentation('surface', { sele: ':A/' + i, multipleBond: true }).setVisibility(false))
+              v.receptors.push(comp.addRepresentation('surface', { sele: ':A/' + i, opacity: 0.8, multipleBond: true }).setVisibility(false))
               v.ligands.push(comp.addRepresentation('licorice', { sele: ':B/' + i, multipleBond: true }).setVisibility(false))
             }
             v.receptors[v.currentModel].setVisibility(true)
             v.ligands[v.currentModel].setVisibility(true)
-            v.stage.autoView()
+            v.checkRenderStatus(function () {
+              v.showCover = false
+              v.stage.autoView()
+            })
           })
         } else {
         }
@@ -166,6 +187,21 @@ export default {
   float: right;
   color: #5a5e66;
   font-size: 14px;
+}
+
+#cover {
+  font-size: 30px;
+  width: 700px;
+  height: 600px;
+  line-height: 500px;
+  vertical-align: middle;
+  text-align: center;
+  color: rgb(180, 188, 204);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 99;
+  background-color: white;
 }
 
 </style>
