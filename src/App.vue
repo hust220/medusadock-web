@@ -55,6 +55,10 @@
                     <i class="el-icon-arrow-right"></i>
                     <span>iFoldRNA</span>
                   </li>
+                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/drugdisco')">
+                    <i class="el-icon-arrow-right"></i>
+                    <span>DrugDisco</span>
+                  </li>
                 </ul>
               </div>
 

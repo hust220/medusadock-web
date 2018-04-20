@@ -1,10 +1,11 @@
 <template>
 <div class="new-task">
   <el-steps :active="step" style="cursor: pointer" finish-status="success">
-    <el-step @click.native="step=0" title="Select Receptor"></el-step>
-    <el-step @click.native="step=1" title="Select Ligand"></el-step>
-    <el-step @click.native="step=2" title="Set Binding Site"></el-step>
-    <el-step @click.native="step=3" title="Submit"></el-step>
+    <el-step @click.native="step=0" :status="getStatus(0)" title="Select Receptor"></el-step>
+    <el-step @click.native="step=1" :status="getStatus(1)" title="Select Ligand"></el-step>
+    <el-step @click.native="step=2" :status="getStatus(2)" title="Set Binding Site"></el-step>
+    <el-step @click.native="step=3" :status="getStatus(3)" title="Set Constraints"></el-step>
+    <el-step @click.native="step=4" :status="getStatus(4)" title="Submit"></el-step>
   </el-steps>
 
   <div id="input-area" style="height: 500px">
@@ -84,6 +85,76 @@
     </div>
 
     <div style="position: relative" v-show="step===3">
+      <div style="height: 100%; width: 420px; float: left">
+        <p>Receptor Residues</p>
+        <div style="overflow-y: scroll; height: 250px">
+          <div v-show="atomSelection.receptor.visible" :style="atomSelection.receptor.style">
+            <ul><li class="atom-label" v-for="(atom, index) in atomSelection.receptor.atoms" @click="handleClickAtomLabel($event, atom, 'receptor')" v-text="atom"></li></ul>
+          </div>
+
+          <div
+            v-for="(res, index) in residues.receptor"
+            @click="handleClickResidueLabel($event, index, 'receptor')"
+            :class="['residue-label', (index===selected.receptor.residueIndex?'residue-selected':'')]">
+            <div class="residue-label-res" v-text="`${res.num}/${res.name}`"></div><div class="residue-label-atom" v-text="(index===selected.receptor.residueIndex?`:${selected.receptor.atomName}`:'')"></div><div class="clear:both"></div>
+          </div>
+        </div>
+
+        <p>Ligand Residues</p>
+        <div style="overflow-y: scroll; height: 50px">
+          <div v-show="atomSelection.ligand.visible" :style="atomSelection.ligand.style">
+            <ul><li class="atom-label" v-for="(atom, index) in atomSelection.ligand.atoms" @click="handleClickAtomLabel($event, atom, 'ligand')" v-text="atom"></li></ul>
+          </div>
+
+          <div
+            v-for="(res, index) in residues.ligand"
+            @click="handleClickResidueLabel($event, index, 'ligand')"
+            :class="['residue-label', (index===selected.ligand.residueIndex?'residue-selected':'')]">
+            <div class="residue-label-res" v-text="`${res.num}/${res.name}`"></div><div class="residue-label-atom" v-text="(index===selected.ligand.residueIndex?`:${selected.ligand.atomName}`:'')"></div><div class="clear:both"></div>
+          </div>
+        </div>
+
+        <p>Distance</p>
+        <el-input v-model="constraintDistance">
+        <template slot="append">&#8491;</template>
+        </el-input>
+      </div>
+
+      <div style="height: 100%; width: 80px; float: left; padding-top: 150px">
+        <div style="margin: 10px 0px 20px 10px">
+          <el-button
+            :disabled="selected.receptor.residueIndex===''||selected.receptor.atomName===''||selected.ligand.residueIndex===''||selected.ligand.atomName===''||constraintDistance===''"
+            @click="addConstraints"
+            style="width: 100%" size="small" type="primary"
+            plain>
+            Add<i class="el-icon-arrow-right el-icon--right"></i>
+          </el-button>
+        </div>
+        <div style="margin: 10px 0px 20px 10px">
+          <el-button
+            @click.native="deleteConstraint"
+            :disabled="selected.constraintIndex===''"
+            style="width: 100%" size="small" type="warning" plain>
+            Delete<i class="el-icon-delete"></i>
+          </el-button>
+        </div>
+      </div>
+
+      <div style="height: 100%; margin-left: 10px; width: 180px; float: left">
+        <p>Constrints</p>
+        <div style="height: 450px; border: 1px solid rgb(180, 188, 204);">
+          <div v-for="(constraint, index) in constraints" @click="selected.constraintIndex=index" :class="['constraint-label', (index===selected.constraintIndex?'constraint-selected':'')]">
+            <div style="float: left; width: 30px; text-align: right" v-text="constraint.receptor.residueIndex+'/'"></div><div style="float: left; width: 30px; text-align: left" v-text="constraint.receptor.atomName"></div>
+            <div style="float: left; width: 30px; text-align: right" v-text="constraint.ligand.residueIndex+'/'"></div><div style="float: left; width: 30px; text-align: left" v-text="constraint.ligand.atomName"></div>
+            <div style="float: left; width: 30px; text-align: right" v-text="constraint.distance"></div>
+            <div style="clear: both"></div>
+          </div>
+        </div>
+      </div>
+      <div style="clear: both"></div>
+    </div>
+
+    <div style="position: relative" v-show="step===4">
       <div v-if="!user">
         <div class="label">Email Address</div>
         <el-input v-model="form.email" style="width: 400px"></el-input>
@@ -92,8 +163,10 @@
       <div class="label">Number of rounds</div>
       <el-input v-model="form.num" style="width: 150px"></el-input>
 
+      <!--
       <div class="label">Constraints</div>
       <el-input type="textarea" :rows="5" v-model="form.constraints"></el-input>
+      -->
 
       <div class="label">Cutoff</div>
       <el-input v-model="form.cutoff" style="width: 150px"></el-input>
@@ -134,6 +207,34 @@ export default {
   name: 'Index',
   data () {
     return {
+      selected: {
+        receptor: {
+          residueIndex: '',
+          atomName: ''
+        },
+        ligand: {
+          residueIndex: '',
+          atomName: ''
+        },
+        constraintIndex: ''
+      },
+
+      atomSelection: {
+        receptor: {
+          atoms: [],
+          visible: false,
+          style: {position: 'absolute', zIndex: '99', paddingLeft: '10px', width: '100px', backgroundColor: 'white', top: '0px', left: '0px'}
+        },
+        ligand: {
+          atoms: [],
+          visible: false,
+          style: {position: 'absolute', zIndex: '99', paddingLeft: '10px', width: '100px', backgroundColor: 'white', top: '0px', left: '0px'}
+        }
+      },
+
+      constraints: [],
+      constraintDistance: '',
+
       pdbid: '',
       zincid: '',
       showCover: false,
@@ -172,9 +273,130 @@ export default {
   computed: {
     user () {
       return this.$store.state.user
+    },
+    residues () {
+      var v = this
+      var receptorResidues = []
+      if (v.ngl.receptor) {
+        v.ngl.receptor.structure.eachResidue(function (r) {
+          var atoms = []
+          r.eachAtom(function (a) {
+            atoms.push(a.atomname)
+          })
+          receptorResidues.push({name: r.resname, num: r.resno, atoms})
+        })
+      }
+      var ligandResidues = []
+      if (v.ngl.ligand) {
+        v.ngl.ligand.structure.eachResidue(function (r) {
+          var atoms = []
+          r.eachAtom(function (a) {
+            atoms.push(a.atomname)
+          })
+          ligandResidues.push({name: r.resname, num: r.resno, atoms})
+        })
+      }
+      return {receptor: receptorResidues, ligand: ligandResidues}
     }
   },
+
   methods: {
+    addConstraints () {
+      var v = this
+      var constraint = {
+        receptor: {
+          residueIndex: v.selected.receptor.residueIndex,
+          atomName: v.selected.receptor.atomName
+        },
+        ligand: {
+          residueIndex: v.selected.ligand.residueIndex,
+          atomName: v.selected.ligand.atomName
+        },
+        distance: v.constraintDistance
+      }
+      console.log(constraint)
+      v.constraints.push(constraint)
+    },
+
+    deleteConstraint () {
+      this.constraints.splice(this.selected.constraintIndex, 1)
+      this.selected.constraintIndex = ''
+      /*
+      var ls = []
+      for (var i = 0; i < this.constraints.length; i++) {
+        if (i !== this.selected.constraintIndex) ls.push(this.constraints[i])
+      }
+      this.constraints = ls
+      this.selected.constraintIndex = ''
+      */
+    },
+
+    handleClickResidueLabel (e, ind, receptorOrLigand) {
+      var v = this
+      var el = e.currentTarget
+      var theOther = (receptorOrLigand === 'receptor' ? 'ligand' : 'receptor')
+
+      v.atomSelection[receptorOrLigand].atoms = v.residues[receptorOrLigand][ind].atoms
+
+      v.atomSelection[receptorOrLigand].style.top = `${el.offsetTop - el.parentElement.scrollTop}px`
+      v.atomSelection[receptorOrLigand].style.left = `${el.offsetLeft + el.offsetWidth}px`
+
+      v.atomSelection[theOther].visible = false
+      if (v.selected[receptorOrLigand].residueIndex === ind) {
+        v.atomSelection[receptorOrLigand].visible ^= true
+      } else {
+        v.atomSelection[receptorOrLigand].visible = true
+      }
+
+      v.selected[receptorOrLigand].residueIndex = ind
+      v.selected[receptorOrLigand].atomName = ''
+    },
+
+    handleClickAtomLabel (e, name, receptorOrLigand) {
+      var v = this
+      v.atomSelection[receptorOrLigand].visible = false
+      v.selected[receptorOrLigand].atomName = name
+    },
+
+    getStatus (n) {
+      var v = this
+      if (n === v.step) {
+        return 'process'
+      } else {
+        if (n === 0) {
+          if (v.ngl.receptor) {
+            return 'success'
+          } else if (n > v.step) {
+            return 'wait'
+          } else {
+            return 'error'
+          }
+        } else if (n === 1) {
+          if (v.ngl.ligand) {
+            return 'success'
+          } else if (n > v.step) {
+            return 'wait'
+          } else {
+            return 'error'
+          }
+        } else if (n === 2) {
+          if (v.ngl.bindingSite) {
+            return 'success'
+          } else if (n > v.step) {
+            return 'wait'
+          } else {
+            return 'error'
+          }
+        } else if (n === 3) {
+          if (n < v.step) {
+            return 'success'
+          } else {
+            return 'wait'
+          }
+        }
+      }
+    },
+
     next () {
       var v = this
       v.step += 1
@@ -450,10 +672,6 @@ export default {
         return
       }
 
-//      formData.append('receptor_pdb', this.$refs.receptor_pdb.files[0])
-//      formData.append('ligand_pdb', this.$refs.ligand_pdb.files[0])
-//      formData.append('binding_site', this.$refs.binding_site.files[0])
-
       axios({
         method: 'post',
         url: 'http://redshift.med.unc.edu/medusadock/actions/submit.php',
@@ -543,6 +761,61 @@ i.prompt {
   left: 0;
   top: 0;
   z-index: 99;
+}
+
+.residue-label {
+  cursor: pointer;
+  color: rgb(180, 188, 204);
+  font-family: consolas, manaco, monospace;
+  font-size: 14px;
+  height: 30px;
+  width: 80px;
+  float: left
+}
+
+.residue-label.residue-selected {
+  font-weight: 600;
+  color: black;
+}
+
+.residue-label-res {
+  width: 55px;
+  float: left;
+  text-align: right;
+}
+
+.residue-label-atom {
+  width: 25px;
+  float: left;
+  text-align: left;
+}
+
+.atom-label {
+  cursor: pointer;
+  width: 100%;
+  font-size: 12px;
+  height: 20px;
+}
+
+.atom-label:hover {
+  /*
+  background-color: #e4ecf4;
+  */
+  background-color: #bfcddc;
+}
+
+.constraint-label {
+  cursor: pointer;
+  padding-left: 10px;
+  font-size: 12px;
+}
+
+.constraint-label:hover {
+  background-color: #bfcddc;
+}
+
+.constraint-label.constraint-selected {
+  background-color: #bfcddc;
 }
 
 </style>
