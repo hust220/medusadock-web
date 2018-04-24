@@ -1,12 +1,13 @@
 <template>
-<div id="app">
+<div @mouseup.preventDefault="draggable=false" @mousemove.preventDefault="dragMainWindow" id="app">
   <!--<img src="./assets/logo.png">-->
   <user :visible.sync="userVisible"></user>
 
-  <div :class="[$store.state.view==='fullscreen'?'main':'main-window']">
+  <div :style="mainStyle">
+    <div @dblclick="($store.state.view==='fullscreen'?$store.commit('viewWindow'):$store.commit('viewFullscreen'))" @mousedown.preventDefault="draggable=true" style="z-index: 98; position: absolute; height: 20px; width: 100%; left: 0px; right: 0px; top: 0px"></div>
     <table>
     <tr>
-        <td class="nav">
+        <td class="nav unselectable">
           <div class="nav-header">
             <div style="font-size: 20px; float: left">MedusaDock</div>
             <div @click="userVisible=true" style="float: right; cursor: pointer"><img width="15px" src="./assets/user.png"></div>
@@ -104,10 +105,35 @@ export default {
   name: 'app',
   data () {
     return {
+      left: '',
+      top: '',
+      draggable: false,
       userVisible: false,
       show_submenu: false,
       active: '',
       task_id: ''
+    }
+  },
+  computed: {
+    mainStyle () {
+      var v = this
+      if (v.$store.state.view === 'fullscreen') {
+        return {
+          position: 'absolute',
+          left: '0px',
+          top: '0px',
+          right: '0px',
+          bottom: '0px'
+        }
+      } else {
+        return {
+          width: '1000px',
+          height: '600px',
+          position: 'absolute',
+          top: `${v.top}px`,
+          left: `${v.left}px`
+        }
+      }
     }
   },
   components: {
@@ -118,7 +144,20 @@ export default {
   methods: {
     redirect (url) {
       window.location.href = url
+    },
+    dragMainWindow (e) {
+      var v = this
+      if (v.draggable) {
+//        console.log(document.body.clientHeight)
+//        console.log(document.body.clientWidth)
+        v.left += e.movementX
+        v.top += e.movementY
+        if (v.left < 0) v.left = 0
+        if (v.top < 0) v.top = 0
+//        console.log(`${e.movementX}-${e.movementY} ${v.left}-${v.top}`)
+      }
     }
+
   },
   mounted () {
     var v = this
@@ -128,6 +167,10 @@ export default {
     bus.$on('switch-task', (id) => {
       v.task_id = id
     })
+    var top = (document.body.clientHeight - 600) / 2
+    var left = (document.body.clientWidth - 1000) / 2
+    v.top = (top < 0 ? 0 : top)
+    v.left = (left < 0 ? 0 : left)
   }
 }
 </script>
@@ -156,25 +199,6 @@ body {
   width: 100%;
   height: 100%;
   position: relative;
-}
-
-.main {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-}
-
-.main-window {
-  width: 1000px;
-  height: 600px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: auto;
 }
 
 table {
@@ -211,6 +235,10 @@ tr {
   padding: 0px;
   overflow-y: scroll;
   position: relative;
+  background-image: url('./assets/intro-bg.png');
+  background-repeat: no-repeat;
+  background-position: 0px 0px;
+  background-size: auto 220px;
 }
 
 .content-content {
@@ -311,6 +339,50 @@ div.el-card__header {
 
 .grey-button {
   color: #5a5e66;
+}
+
+.unselectable {
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+a {
+  color: #eb9e05;
+}
+
+a:hover {
+  color: #ad8134;
+}
+
+a:visited {
+  color: #ad8134;
+}
+
+.el-button--text {
+  color: #eb9e05;
+}
+
+a.jn-button {
+  color: #eb9e05;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-block;
+  line-height: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 12px 0px;
+}
+
+a:hover.jn-button {
+  color: #ad8134;
+}
+
+a:visited.jn-button {
+  color: #eb9e05;
 }
 
 </style>

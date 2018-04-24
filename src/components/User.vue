@@ -1,5 +1,8 @@
 <template>
+<div>
+  <sign-up :visible.sync="signUpVisible"></sign-up>
   <el-dialog :visible="visible" width="30%" @update:visible="updateVisible">
+
     <div v-if="$store.state.user">
       <table>
         <tr><td width="150px">User ID:</td><td v-text="user.id"></td></tr>
@@ -26,21 +29,31 @@
       </el-form>
 
       <div slot="footer" class="dialog-footer">
-        <el-button @click="updateVisible(false)">Cancel</el-button>
-        <el-button type="primary" @click="submit">Login</el-button>
+        <div style="float: left">
+          <el-button @click="updateVisible(false)">Cancel</el-button>
+          <el-button type="warning" @click="submit">Login</el-button>
+        </div>
+        <div style="float: right">
+          <a class="jn-button" @click="updateVisible(false);signUpVisible=true;"> Sign Up</a>
+        </div>
+        <div style="clear: both"></div>
+
       </div>
     </div>
   </el-dialog>
+</div>
 </template>
 
 <script>
 import axios from 'axios'
+import SignUp from '@/components/SignUp'
 
 export default {
   name: 'user',
 
   data () {
     return {
+      signUpVisible: false,
       form: {
         username: '',
         password: ''
@@ -52,6 +65,10 @@ export default {
     user () {
       return this.$store.state.user
     }
+  },
+
+  components: {
+    SignUp
   },
 
   props: ['visible'],

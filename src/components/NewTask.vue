@@ -10,9 +10,10 @@
 
   <div id="input-area" style="height: 500px">
     <div v-show="step<3">
+      <!-- Select the receptor -->
       <div v-show="step===0">
         <div class="label">Please
-          <el-button type='text' onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</el-button>
+          <a class="jn-button" onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</a>
           <el-tooltip class="item" effect="dark" content="Only '.pdb' format is supported." placement="bottom">
             <i class="el-icon-question"></i>
           </el-tooltip>
@@ -25,7 +26,7 @@
               </tr>
             </table>
           </el-popover>
-          <el-button type='text' v-popover:popover-pdbid>input the PDB ID</el-button>
+          <a class="jn-button" v-popover:popover-pdbid>input the PDB ID</a>
           <el-tooltip class="item" effect="dark" content="Example: 5i3y" placement="bottom">
             <i class="el-icon-question"></i>
           </el-tooltip>
@@ -34,9 +35,10 @@
         <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="uploadReceptor($event)" style="display:None;">
       </div>
 
+      <!-- Select the ligand -->
       <div v-show="step===1">
         <div class="label">Please
-          <el-button type='text' onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</el-button>
+          <a class="jn-button" onclick="window.document.getElementById('ligand_pdb').click()">upload the structure</a>
           <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
             <i class="el-icon-question"></i>
           </el-tooltip>
@@ -49,7 +51,7 @@
               </tr>
             </table>
           </el-popover>
-          <el-button type='text' v-popover:popover-zincid>input the ZINC ID</el-button>
+          <a class="jn-button" v-popover:popover-zincid>input the ZINC ID</a>
           <el-tooltip class="item" effect="dark" content="Example: ZINC0000534" placement="bottom">
             <i class="el-icon-question"></i>
           </el-tooltip>
@@ -58,33 +60,50 @@
         <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="uploadLigand($event)" style="display:None;">
       </div>
 
+      <!-- Set the binding site -->
       <div v-show="step===2">
         <div class="label">
           Please
-          <el-button type="text" @click.native="setBindingSite">specify the position</el-button>
-          <el-tooltip class="item" effect="dark" placement="bottom">
-            <div slot="content">Drag the red sphere in X-Y plane with left mouse while hold on the 'ctrl' key.<br>Drag the red sphere along the Z-axis with right mouse while hold on the 'ctrl' key.</div>
-            <i class="el-icon-question"></i>
-          </el-tooltip>
+          <a class="jn-button" @click="setBindingSite">specify the position</a>
           or
-          <el-button type='text' onclick="window.document.getElementById('binding_site').click()">upload the structure</el-button>
-          <el-tooltip class="item" effect="dark" content="Only '.mol2' format is supported." placement="bottom">
-            <i class="el-icon-question"></i>
-          </el-tooltip>
+          <a class="jn-button" onclick="window.document.getElementById('binding_site').click()">upload the structure</a>
           of the binding site.
+          <el-tooltip class="item" effect="dark" placement="bottom">
+          <div slot="content">
+            <h4>Step 1: Set the initial position of the binding site by one of the methods below.</h4>
+            <div style="padding-left: 30px">
+              <ul style="list-style-type: disc">
+                <li>Click the 'specify the position' link.</li>
+                <li>Click the 'upload the structure' link (Only '.mol2' format is supported).</li>
+              </ul>
+              <p>A red ball will appear in the middle of the screen.</p>
+            </div>
+
+            <h4>Step 2: Drag the ball to specify the binding site.</h4>
+            <div style="padding-left: 30px">
+              <ul style="list-style-type: disc">
+                <li>Drag the red ball in X-Y plane with left mouse while hold on the 'ctrl' key.</li>
+                <li>Drag the red ball along the Z-axis with right mouse while hold on the 'ctrl' key.</li>
+              </ul>
+            </div>
+          </div>
+          <i class="el-icon-question"></i>
+          </el-tooltip>
         </div>
         <input type="file" id="binding_site" ref="binding_site" @change="uploadBindingSite($event)" style="display:None">
       </div>
 
+      <!-- Viewport -->
       <div style="position:relative">
         <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
         <div id="structure-name" v-text="(step==0?ngl.receptor.name:(step==1?ngl.ligand.name:''))" v-if="step<3"></div>
         <div id="viewport"></div>
       </div>
-
     </div>
 
+    <!-- Set the constraints -->
     <div style="position: relative" v-show="step===3">
+      <!-- left panel -->
       <div style="height: 100%; width: 420px; float: left">
         <p>Receptor Residues</p>
         <div style="overflow-y: scroll; height: 250px">
@@ -101,7 +120,7 @@
         </div>
 
         <p>Ligand Residues</p>
-        <div style="overflow-y: scroll; height: 50px">
+        <div style="overflow-y: scroll; height: 30px">
           <div v-show="atomSelection.ligand.visible" :style="atomSelection.ligand.style">
             <ul><li class="atom-label" v-for="(atom, index) in atomSelection.ligand.atoms" @click="handleClickAtomLabel($event, atom, 'ligand')" v-text="atom"></li></ul>
           </div>
@@ -120,7 +139,9 @@
         </el-input>
       </div>
 
+      <!-- middle panel -->
       <div style="height: 100%; width: 80px; float: left; padding-top: 150px">
+        <!-- The Add Button -->
         <div style="margin: 10px 0px 20px 10px">
           <el-button
             :disabled="selected.receptor.residueIndex===''||selected.receptor.atomName===''||selected.ligand.residueIndex===''||selected.ligand.atomName===''||constraintDistance===''"
@@ -130,6 +151,8 @@
             Add<i class="el-icon-arrow-right el-icon--right"></i>
           </el-button>
         </div>
+
+        <!-- The Delete Button -->
         <div style="margin: 10px 0px 20px 10px">
           <el-button
             @click.native="deleteConstraint"
@@ -140,9 +163,15 @@
         </div>
       </div>
 
+      <!-- right panel -->
       <div style="height: 100%; margin-left: 10px; width: 180px; float: left">
-        <p>Constrints</p>
-        <div style="height: 450px; border: 1px solid rgb(180, 188, 204);">
+        <p>
+          Constraints<el-tooltip class="item" effect="dark" placement="bottom">
+          <div slot="content"><b>Add constraints</b><ol><li>Select a receptor atom</li><li>Select a ligand atom</li><li>Set the distance</li><li>Click the 'Add' button</li></ol><b>Delete constraints</b><ol><li>Select a constraint</li><li>Click the 'Delete' button</li></ol></div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+        </p>
+        <div style="height: 420px; border: 1px solid #e5e5e5;">
           <div v-for="(constraint, index) in constraints" @click="selected.constraintIndex=index" :class="['constraint-label', (index===selected.constraintIndex?'constraint-selected':'')]">
             <div style="float: left; width: 30px; text-align: right" v-text="constraint.receptor.residueIndex+'/'"></div><div style="float: left; width: 30px; text-align: left" v-text="constraint.receptor.atomName"></div>
             <div style="float: left; width: 30px; text-align: right" v-text="constraint.ligand.residueIndex+'/'"></div><div style="float: left; width: 30px; text-align: left" v-text="constraint.ligand.atomName"></div>
@@ -154,6 +183,7 @@
       <div style="clear: both"></div>
     </div>
 
+    <!-- Set parameters -->
     <div style="position: relative" v-show="step===4">
       <div v-if="!user">
         <div class="label">Email Address</div>
@@ -171,13 +201,9 @@
       <div class="label">Cutoff</div>
       <el-input v-model="form.cutoff" style="width: 150px"></el-input>
 
-      <!--
-      <el-button v-if="step>0" style="float: left; margin-top: 12px;" @click="prev" icon="el-icon-arrow-left">Prev</el-button>
-      <el-button v-if="(step==0&&ngl.receptor)||(step==1&&ngl.ligand)||(step==2&&ngl.bindingSite)" type="primary" style="float: right; margin-top: 12px;" @click="next">Next<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-      -->
       <div></div>
       <div style="float: right">
-        <el-button type="success" @click="submit">Submit<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+        <el-button type="warning" @click="submit">Submit<i class="el-icon-arrow-right el-icon--right"></i></el-button>
       </div>
       <div style="clear: both"></div>
     </div>
@@ -445,7 +471,7 @@ export default {
       v.ngl.stage.removeComponent(v.ngl.bindingSite)
       v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
         v.ngl.receptor = comp
-        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5 })
+        v.ngl.receptorSurface = comp.addRepresentation('surface', { probeRadius: 1.5, multipleBond: true, opacity: 0.5 })
         v.checkRenderStatus(function () {
           v.ngl.stage.autoView()
           v.showCover = false
@@ -490,6 +516,7 @@ export default {
     },
 
     setBindingSite () {
+      console.log('setBindingSite...')
       let v = this
 
       v.ngl.stage.removeComponent(v.ngl.bindingSite)

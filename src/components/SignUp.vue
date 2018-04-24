@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="Sign Up" :visible="visible" @update:visible="updateVisible">
+  <el-dialog width="30%" :visible="visible" @update:visible="updateVisible">
     <el-form @keyup.enter="submit" :model="form">
       <el-form-item label="User Name" label-width="150">
         <el-input v-model="form.username" auto-complete="off"></el-input>
@@ -21,7 +21,7 @@
 
     <div slot="footer" class="dialog-footer">
       <el-button @click="updateVisible(false)">Cancel</el-button>
-      <el-button type="primary" @click="submit">Sign Up</el-button>
+      <el-button type="warning" @click="submit">Sign Up</el-button>
     </div>
   </el-dialog>
 </template>

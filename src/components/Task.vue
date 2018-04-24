@@ -204,4 +204,7 @@ export default {
   background-color: white;
 }
 
+.el-button--text {
+  color: #eb9e05;
+}
 </style>
