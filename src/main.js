@@ -6,11 +6,17 @@ import App from './App'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import router from './router'
+import vueConfig from 'vue-config'
+
+const configs = {
+  HOST: 'http://' + window.location.hostname
+}
 
 Vue.config.productionTip = false
 
 Vue.use(ElementUI)
 Vue.use(Vuex)
+Vue.use(vueConfig, configs)
 
 const store = new Vuex.Store({
   state: {

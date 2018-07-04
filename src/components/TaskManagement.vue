@@ -75,7 +75,7 @@ export default {
     },
     check () {
       var v = this
-      axios.get('http://redshift.med.unc.edu/medusadock/actions/check.php').then(response => {
+      axios.get(v.$config.HOST + '/medusadock/static/check.php').then(response => {
         v.tasks = response.data.tasks
       }).catch(() => {
         console.log('get failed')

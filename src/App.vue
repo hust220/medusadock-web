@@ -9,7 +9,7 @@
     <tr>
         <td class="nav unselectable">
           <div class="nav-header">
-            <div style="font-size: 20px; float: left">MedusaDock</div>
+            <div style="font-size: 20px; float: left">MedusaDock v2.0</div>
             <div @click="userVisible=true" style="float: right; cursor: pointer"><img width="15px" src="./assets/user.png"></div>
             <div style="clear: both"></div>
           </div>
@@ -40,30 +40,30 @@
                   <i class="submenu-arrow el-icon-arrow-down" v-else></i>
                 </li>
                 <ul class="submenu-list" v-show="show_submenu">
-                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/eris')">
+                  <li class="menu-item" @click="redirect($config.HOST + '/eris')">
                     <i class="el-icon-arrow-right"></i>
                     <span>Eris</span>
                   </li>
-                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/chiron')">
+                  <li class="menu-item" @click="redirect($config.HOST + '/chiron')">
                     <i class="el-icon-arrow-right"></i>
                     <span>Chiron</span>
                   </li>
-                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/ifold')">
+                  <li class="menu-item" @click="redirect($config.HOST + '/ifold')">
                     <i class="el-icon-arrow-right"></i>
                     <span>iFold</span>
                   </li>
-                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/ifoldrna')">
+                  <li class="menu-item" @click="redirect($config.HOST + '/ifoldrna')">
                     <i class="el-icon-arrow-right"></i>
                     <span>iFoldRNA</span>
                   </li>
-                  <li class="menu-item" @click="redirect('http://redshift.med.unc.edu/drugdisco')">
+                  <li class="menu-item" @click="redirect($config.HOST + '/drugdisco')">
                     <i class="el-icon-arrow-right"></i>
                     <span>DrugDisco</span>
                   </li>
                 </ul>
               </div>
 
-              <li class="menu-item" @click="redirect('http://redshift.med.unc.edu')">
+              <li class="menu-item" @click="redirect($config.HOST)">
                 <i class="el-icon-location"></i>
                 <span>Dokholyan Lab</span>
               </li>

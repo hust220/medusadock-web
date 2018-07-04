@@ -503,7 +503,7 @@ export default {
       v.showCover = true
       console.log('Loading Ligand...')
       v.ngl.stage.removeComponent(v.ngl.ligand)
-      v.ngl.stage.loadFile(`http://redshift.med.unc.edu/medusadock/actions/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
+      v.ngl.stage.loadFile(v.$config.HOST + `/medusadock/static/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
         v.ngl.ligand = comp
         comp.addRepresentation('ball+stick', { multipleBond: true })
         v.checkRenderStatus(function () {
@@ -701,7 +701,7 @@ export default {
 
       axios({
         method: 'post',
-        url: 'http://redshift.med.unc.edu/medusadock/actions/submit.php',
+        url: v.$config.HOST + '/medusadock/static/submit.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {

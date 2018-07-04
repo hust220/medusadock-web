@@ -58,7 +58,7 @@ export default {
 
       axios({
         method: 'post',
-        url: 'http://redshift.med.unc.edu/medusadock/actions/sign_up.php',
+        url: v.$config.HOST + '/medusadock/static/sign_up.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {

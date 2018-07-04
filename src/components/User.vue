@@ -87,7 +87,7 @@ export default {
 
       axios({
         method: 'post',
-        url: 'http://redshift.med.unc.edu/medusadock/actions/login.php',
+        url: v.$config.HOST + '/medusadock/static/login.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {

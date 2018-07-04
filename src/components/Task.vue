@@ -15,7 +15,7 @@
       </el-dropdown>
     </div>
 
-    <div class="download-button"><a :href="'http://redshift.med.unc.edu/medusadock/actions/task.php?item=output&suffix=pdb&id='+id">Download All Models</a></div>
+    <div class="download-button"><a :href="$config.HOST + '/medusadock/static/task.php?item=output&suffix=pdb&id='+id">Download All Models</a></div>
 
     <!-- <div style="text-align: center">Model {{currentModel+1}}, Energy: {{energies[currentModel]}}</div>-->
   </div>
@@ -103,7 +103,7 @@ export default {
 
     check () {
       var v = this
-      axios.get('http://redshift.med.unc.edu/medusadock/actions/task.php?id=' + v.id).then(response => {
+      axios.get(v.$config.HOST + '/medusadock/static/task.php?id=' + v.id).then(response => {
         v.task = response.data
 
         if (v.task.status === 'finished') {
