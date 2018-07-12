@@ -1,19 +1,19 @@
 <template>
   <el-dialog width="30%" :visible="visible" @update:visible="updateVisible">
-    <el-form @keyup.enter="submit" :model="form">
-      <el-form-item label="User Name" label-width="150">
+    <el-form @keyup.enter="submit" label-position="left" label-width="150px" :model="form">
+      <el-form-item label="User Name">
         <el-input v-model="form.username" auto-complete="off"></el-input>
       </el-form-item>
 
-      <el-form-item label="Password" label-width="150">
+      <el-form-item label="Password">
         <el-input type="password" v-model="form.password1" auto-complete="off"></el-input>
       </el-form-item>
 
-      <el-form-item label="Confirm Password" label-width="150">
+      <el-form-item label="Confirm Password">
         <el-input type="password" v-model="form.password2" auto-complete="off"></el-input>
       </el-form-item>
 
-      <el-form-item label="Email" label-width="150">
+      <el-form-item label="Email">
         <el-input v-model="form.email" auto-complete="off"></el-input>
       </el-form-item>
 
@@ -58,7 +58,7 @@ export default {
 
       axios({
         method: 'post',
-        url: v.$config.HOST + '/medusadock/static/sign_up.php',
+        url: v.$config.HOST + '/medusadock/actions/sign_up.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {

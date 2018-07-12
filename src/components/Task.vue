@@ -1,28 +1,28 @@
 <template>
 <div class="task">
-  <div class="header">
-    <div>Status of Task {{id}}: {{task.status}}(<el-button type="text" @click="logVisible = true">check the log</el-button>)</div>
-
-    <div class="switch-menu">
-      <el-dropdown>
-        <span class="el-dropdown-link">
-          Model {{currentModel+1}} (Energy: {{energies[currentModel]}})<i class="el-icon-arrow-down el-icon--right"></i>
-        </span>
-
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item v-for="(energy, index) in energies" :key="index" @click.native="handleCommand(index)" >Model {{index+1}} (Energy: {{energies[index]}})</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
-    </div>
-
-    <div class="download-button"><a :href="$config.HOST + '/medusadock/static/task.php?item=output&suffix=pdb&id='+id">Download All Models</a></div>
-
-    <!-- <div style="text-align: center">Model {{currentModel+1}}, Energy: {{energies[currentModel]}}</div>-->
-  </div>
+  <div style="margin: 20px 0px">Status of Task {{id}}: {{task.status}}(<el-button type="text" @click="logVisible = true">check the log</el-button>)</div>
 
   <div style="position:relative">
+    <div class="header">
+      <div class="switch-menu">
+        <el-dropdown>
+          <span class="el-dropdown-link">
+            Model {{currentModel+1}} (Energy: {{energies[currentModel]}})<i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item v-for="(energy, index) in energies" :key="index" @click.native="handleCommand(index)" >Model {{index+1}} (Energy: {{energies[index]}})</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="download-button"><a :href="$config.HOST + `/medusadock/actions/file.php?name=${task.output}&format=pdb`">Download All Models</a></div>
+
+      <div style="clear: both"></div>
+    </div>
+
     <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
-    <div id="viewport" style="width:700px; height:600px;"></div>
+    <div id="viewport"></div>
   </div>
 
   <!--
@@ -38,7 +38,7 @@
   -->
 
   <el-dialog :title="'Log of Task '+id" :visible.sync="logVisible" width="80%">
-    <pre>{{task.log}}</pre>
+    <pre>{{log}}</pre>
     <span slot="footer" class="dialog-footer">
       <el-button type="primary" @click="logVisible=false">Close</el-button>
     </span>
@@ -66,7 +66,9 @@ export default {
       numModels: 0,
       receptors: [],
       ligands: [],
-      energies: []
+      energies: [],
+      log: '',
+      output: ''
     }
   },
   computed: {
@@ -103,43 +105,48 @@ export default {
 
     check () {
       var v = this
-      axios.get(v.$config.HOST + '/medusadock/static/task.php?id=' + v.id).then(response => {
+      axios.get(v.$config.HOST + '/medusadock/actions/task.php?id=' + v.id).then(response => {
+        console.log(response.data)
         v.task = response.data
+        console.log(v.task)
+
+        axios.get(v.$config.HOST + `/medusadock/actions/file.php?name=${v.task.log}&format=txt`).then(response => {
+          v.log = response.data
+        })
 
         if (v.task.status === 'finished') {
-          v.task.output.split('\n').forEach(function (l) {
-            if (l.search('E_Int_terms') !== -1) {
-              v.energies.push(l.split(/\s+/)[2])
-//              v.energies.push()
-            }
-          })
-          v.showCover = true
-          v.stage.loadFile(new Blob([v.task.output], { type: 'text/plain' }), { ext: 'pdb' }).then(function (comp) {
-            v.stage.comp = comp
-            v.numModels = comp.structure.modelStore.count
-            for (var i = 0; i < v.numModels; i++) {
-              v.receptors.push(comp.addRepresentation('surface', { sele: ':A/' + i, opacity: 0.8, multipleBond: true }).setVisibility(false))
-              v.ligands.push(comp.addRepresentation('licorice', { sele: ':B/' + i, multipleBond: true }).setVisibility(false))
-            }
-            v.receptors[v.currentModel].setVisibility(true)
-            v.ligands[v.currentModel].setVisibility(true)
-            v.checkRenderStatus(function () {
-              v.showCover = false
-              v.stage.autoView()
+          axios.get(v.$config.HOST + `/medusadock/actions/file.php?name=${v.task.output}&format=pdb`).then(response => {
+            v.output = response.data
+            v.output.split('\n').forEach(function (l) {
+              if (l.search('E_Int_terms') !== -1) {
+                v.energies.push(l.split(/\s+/)[2])
+              }
+            })
+            v.showCover = true
+            v.stage.loadFile(new Blob([v.output], { type: 'text/plain' }), { ext: 'pdb' }).then(function (comp) {
+              v.stage.comp = comp
+              v.numModels = comp.structure.modelStore.count
+              for (var i = 0; i < v.numModels; i++) {
+                v.receptors.push(comp.addRepresentation('surface', { sele: ':A/' + i, opacity: 0.8, multipleBond: true }).setVisibility(false))
+                v.ligands.push(comp.addRepresentation('licorice', { sele: ':B/' + i, multipleBond: true }).setVisibility(false))
+              }
+              v.receptors[v.currentModel].setVisibility(true)
+              v.ligands[v.currentModel].setVisibility(true)
+              v.checkRenderStatus(function () {
+                v.showCover = false
+                v.stage.autoView()
+              })
             })
           })
         } else {
+          setTimeout(() => { v.check() }, 3000)
         }
       }).catch(() => {
         console.log('Retrieve files failed!')
       })
-//      if (v.task.id !== v.id) {
-//        setTimeout(function () {
-//          v.check()
-//        }, 3000)
-//      }
     }
   },
+
   mounted () {
     var v = this
     v.$nextTick(function () {
@@ -160,6 +167,11 @@ export default {
 
 .task .header {
   margin: 20px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  z-index: 99;
 }
 
 .el-form-item {
@@ -191,9 +203,9 @@ export default {
 
 #cover {
   font-size: 30px;
-  width: 700px;
-  height: 600px;
-  line-height: 500px;
+  width: 720px;
+  height: 450px;
+  line-height: 450px;
   vertical-align: middle;
   text-align: center;
   color: rgb(180, 188, 204);
@@ -202,6 +214,13 @@ export default {
   top: 0;
   z-index: 99;
   background-color: white;
+}
+
+#viewport {
+  width: 720px;
+  height: 450px;
+  margin: 0px auto 0px 0px;
+  box-shadow: 0 0 5px #888888;
 }
 
 .el-button--text {

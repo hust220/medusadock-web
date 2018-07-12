@@ -66,32 +66,40 @@ export default {
       queuedStatus: '<i>Queued</i>',
       failedStatus: '<i>Failed</i>',
       runningStatus: '<i style="margin-left: 10px" class="el-icon-loading"></i>',
-      tasks: []
+      tasks: [],
+      intervalId: 0
     }
   },
   methods: {
     finishedStatus (id) {
       return '<a href="#/Task/' + id + '"><i style="color:#878d99; margin-left: 10px;" class="view el-icon-view"></i></a>'
     },
+
     check () {
       var v = this
-      axios.get(v.$config.HOST + '/medusadock/static/check.php').then(response => {
+      axios.get(v.$config.HOST + '/medusadock/actions/check.php').then(response => {
         v.tasks = response.data.tasks
       }).catch(() => {
         console.log('get failed')
       })
     }
   },
+
   mounted () {
     this.$nextTick(function () {
       bus.$emit('switch-router', 'TaskManagement')
 
       var v = this
       v.check()
-      setInterval(function () {
+      v.intervalId = setInterval(function () {
         v.check()
       }, 5000)
     })
+  },
+
+  destroyed () {
+    var v = this
+    clearInterval(v.intervalId)
   }
 }
 </script>
@@ -111,6 +119,7 @@ export default {
 table.tasks {
   text-align: center;
   color: rgb(96, 98, 102);
+  margin: 30px 0px;
 }
 
 thead {

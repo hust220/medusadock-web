@@ -14,15 +14,15 @@
       <div v-show="step===0">
         <div class="label">Please
           <a class="jn-button" onclick="window.document.getElementById('receptor_pdb').click()">upload the structure</a>
-          <el-tooltip class="item" effect="dark" content="Only '.pdb' format is supported." placement="bottom">
+          <el-tooltip class="item" effect="dark" content="Most formats are supported, including '.pdb', '.mol2', ..." placement="bottom">
             <i class="el-icon-question"></i>
           </el-tooltip>
           or
           <el-popover ref="popover-pdbid" placement="bottom-start" v-model="showPdbIdInput" width="400" trigger="click">
             <table>
               <tr>
-                <td><el-input @keyup.enter.native="fetchReceptorFromPdb" ref="pdbInput" v-model="pdbid" placeholder="PDB ID"></el-input></td>
-                <td><el-button type="warning" plain @click="fetchReceptorFromPdb">Confirm</el-button></td>
+                <td><el-input @keyup.enter.native="setReceptor()" ref="pdbInput" v-model="pdbid" placeholder="PDB ID"></el-input></td>
+                <td><el-button type="warning" plain @click="setReceptor()">Confirm</el-button></td>
               </tr>
             </table>
           </el-popover>
@@ -32,7 +32,7 @@
           </el-tooltip>
           of the receptor.
         </div>
-        <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="uploadReceptor($event)" style="display:None;">
+        <input type="file" id="receptor_pdb" ref="receptor_pdb" @change="setReceptor($event)" style="display:None;">
       </div>
 
       <!-- Select the ligand -->
@@ -46,8 +46,8 @@
           <el-popover ref="popover-zincid" placement="bottom-start" v-model="showZincIdInput" width="400" trigger="click">
             <table>
               <tr>
-                <td><el-input @keyup.enter.native="fetchLigandFromZinc" ref="zincInput" v-model="zincid" placeholder="ZINC ID"></el-input></td>
-                <td><el-button type="warning" plain @click="fetchLigandFromZinc">Confirm</el-button></td>
+                <td><el-input @keyup.enter.native="setLigand()" ref="zincInput" v-model="zincid" placeholder="ZINC ID"></el-input></td>
+                <td><el-button type="warning" plain @click="setLigand()">Confirm</el-button></td>
               </tr>
             </table>
           </el-popover>
@@ -57,7 +57,7 @@
           </el-tooltip>
           of the ligand.
         </div>
-        <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="uploadLigand($event)" style="display:None;">
+        <input type="file" id="ligand_pdb" ref="ligand_pdb" @change="setLigand($event)" style="display:None;">
       </div>
 
       <!-- Set the binding site -->
@@ -96,7 +96,11 @@
       <!-- Viewport -->
       <div style="position:relative">
         <div id="cover" v-show="showCover">Loading the Structure<i class="el-icon-loading"></i></div>
-        <div id="structure-name" v-text="(step==0?ngl.receptor.name:(step==1?ngl.ligand.name:''))" v-if="step<3"></div>
+        <div id="structure-name" v-if="step<3">
+          <div v-if="ngl.receptorName">Receptor: <a :href="$config.HOST+`/medusadock/actions/file.php?name=${ngl.receptorName}&format=pdb`" v-text="ngl.receptorName+'.pdb'"></a></div>
+          <div v-if="ngl.ligandName">Ligand: <a :href="$config.HOST+`/medusadock/actions/file.php?name=${ngl.ligandName}&format=mol2`" v-text="ngl.ligandName+'.mol2'"></a></div>
+          <div v-if="ngl.bindingSite">Binding Site: {{bindingSiteCenter().map(x => x.toFixed(2)).join(', ')}}</div>
+        </div>
         <div id="viewport"></div>
       </div>
     </div>
@@ -129,7 +133,7 @@
             v-for="(res, index) in residues.ligand"
             @click="handleClickResidueLabel($event, index, 'ligand')"
             :class="['residue-label', (index===selected.ligand.residueIndex?'residue-selected':'')]">
-            <div class="residue-label-res" v-text="`${res.num}/${res.name}`"></div><div class="residue-label-atom" v-text="(index===selected.ligand.residueIndex?`:${selected.ligand.atomName}`:'')"></div><div class="clear:both"></div>
+            <div class="residue-label-res" v-text="`${res.num}`"></div><div class="residue-label-atom" v-text="(index===selected.ligand.residueIndex?`:${selected.ligand.atomName}`:'')"></div><div class="clear:both"></div>
           </div>
         </div>
 
@@ -443,41 +447,126 @@ export default {
         }
       }, 500)
     },
-    uploadReceptor (e) {
+
+    setReceptor () {
       let v = this
-      let f = e.target.files[0]
+      let formData = new FormData()
+
+      console.log(arguments)
+      if (arguments.length > 0) {
+        let f = arguments[0].target.files[0]
+        formData.append('file', f)
+      } else if (v.pdbid !== '') {
+        formData.append('pdbid', v.pdbid)
+      } else {
+        alert('Please specify the receptor!')
+        return
+      }
 
       v.showCover = true
-      console.log('Loading receptor...')
-      v.ngl.stage.removeComponent(v.ngl.receptor)
-      v.ngl.stage.removeComponent(v.ngl.bindingSite)
-      v.ngl.stage.loadFile(f, { ext: 'pdb' }).then(function (comp) {
-        v.ngl.receptor = comp
-        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5, lazy: false })
-        v.checkRenderStatus(function () {
-          v.ngl.stage.autoView()
-          v.showCover = false
-        })
-      })
-    },
-
-    fetchReceptorFromPdb () {
-      let v = this
       v.showPdbIdInput = false
-
-      v.showCover = true
-      console.log('Loading receptor...')
       v.ngl.stage.removeComponent(v.ngl.receptor)
       v.ngl.stage.removeComponent(v.ngl.bindingSite)
-      v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
-        v.ngl.receptor = comp
-        v.ngl.receptorSurface = comp.addRepresentation('surface', { probeRadius: 1.5, multipleBond: true, opacity: 0.5 })
-        v.checkRenderStatus(function () {
-          v.ngl.stage.autoView()
-          v.showCover = false
+
+      axios({
+        method: 'post',
+        url: v.$config.HOST + '/medusadock/actions/set_receptor.php',
+        data: formData,
+        config: {headers: {'Content-Type': 'multipart/form-data'}}
+      }).then(response => {
+        v.ngl.receptorName = response.data
+        console.log(v.ngl.receptorName)
+        v.ngl.stage.loadFile(v.$config.HOST + `/medusadock/actions/file.php?name=${v.ngl.receptorName}&format=pdb`, { ext: 'pdb' }).then(function (comp) {
+          v.ngl.receptor = comp
+          v.ngl.receptorSurface = comp.addRepresentation('surface', { probeRadius: 1.5, multipleBond: true, opacity: 0.5 })
+          v.checkRenderStatus(function () {
+            v.ngl.stage.autoView()
+            v.showCover = false
+          })
         })
+      }).catch(() => {
+        alert('Setting Receptor Failed!')
       })
     },
+
+    setLigand () {
+      let v = this
+      let formData = new FormData()
+
+      console.log(arguments)
+      if (arguments.length > 0) {
+        let f = arguments[0].target.files[0]
+        formData.append('file', f)
+      } else if (v.zincid !== '') {
+        var m = v.zincid.match(/(zinc)?0*(\d+)/i)
+        v.zincid = m[2]
+        formData.append('zincid', v.zincid)
+      } else {
+        alert('Please specify the receptor!')
+        return
+      }
+
+      v.showCover = true
+      v.showZincIdInput = false
+      v.ngl.stage.removeComponent(v.ngl.ligand)
+
+      axios({
+        method: 'post',
+        url: v.$config.HOST + '/medusadock/actions/set_ligand.php',
+        data: formData,
+        config: {headers: {'Content-Type': 'multipart/form-data'}}
+      }).then(response => {
+        v.ngl.ligandName = response.data
+        v.ngl.stage.loadFile(v.$config.HOST + `/medusadock/actions/file.php?name=${v.ngl.ligandName}&format=mol2`, { ext: 'mol2' }).then(function (comp) {
+          v.ngl.ligand = comp
+          comp.addRepresentation('ball+stick', { multipleBond: true })
+          v.checkRenderStatus(function () {
+            v.ngl.stage.autoView()
+            v.showCover = false
+//            console.log(v.componentToPdb(v.ngl.ligand))
+          })
+        })
+      }).catch(() => {
+        alert('Setting Receptor Failed!')
+      })
+    },
+
+//    uploadReceptor (e) {
+//      let v = this
+//      let f = e.target.files[0]
+//
+//      v.showCover = true
+//
+//      console.log('Loading receptor...')
+//      v.ngl.stage.removeComponent(v.ngl.receptor)
+//      v.ngl.stage.removeComponent(v.ngl.bindingSite)
+//      v.ngl.stage.loadFile(f, { ext: 'pdb' }).then(function (comp) {
+//        v.ngl.receptor = comp
+//        v.ngl.receptorSurface = comp.addRepresentation('surface', { multipleBond: true, opacity: 0.5, lazy: false })
+//        v.checkRenderStatus(function () {
+//          v.ngl.stage.autoView()
+//          v.showCover = false
+//        })
+//      })
+//    },
+//
+//    fetchReceptorFromPdb () {
+//      let v = this
+//      v.showPdbIdInput = false
+//
+//      v.showCover = true
+//      console.log('Loading receptor...')
+//      v.ngl.stage.removeComponent(v.ngl.receptor)
+//      v.ngl.stage.removeComponent(v.ngl.bindingSite)
+//      v.ngl.stage.loadFile(`http://files.rcsb.org/download/${v.pdbid}.cif`, { ext: 'cif' }).then(function (comp) {
+//        v.ngl.receptor = comp
+//        v.ngl.receptorSurface = comp.addRepresentation('surface', { probeRadius: 1.5, multipleBond: true, opacity: 0.5 })
+//        v.checkRenderStatus(function () {
+//          v.ngl.stage.autoView()
+//          v.showCover = false
+//        })
+//      })
+//    },
 
     uploadLigand (e) {
       let v = this
@@ -503,7 +592,7 @@ export default {
       v.showCover = true
       console.log('Loading Ligand...')
       v.ngl.stage.removeComponent(v.ngl.ligand)
-      v.ngl.stage.loadFile(v.$config.HOST + `/medusadock/static/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
+      v.ngl.stage.loadFile(v.$config.HOST + `/medusadock/actions/zinc.php?id=${v.zincid}`, { ext: 'mol2' }).then(function (comp) {
         v.ngl.ligand = comp
         comp.addRepresentation('ball+stick', { multipleBond: true })
         v.checkRenderStatus(function () {
@@ -531,6 +620,7 @@ export default {
       }
 
       v.showCover = true
+      v.showViewArea = true
       var shapeComp = v.ngl.stage.addComponentFromObject(shape)
       shapeComp.addRepresentation('buffer')
       v.ngl.bindingSite = shapeComp
@@ -547,6 +637,7 @@ export default {
 
       console.log('Loading ligand...')
       v.showCover = true
+      v.showViewArea = true
       v.ngl.stage.removeComponent(v.ngl.bindingSite)
       v.ngl.stage.loadFile(f, { ext: 'mol2' }).then(function (comp) {
         var shape = new NGL.Shape('shape')
@@ -679,14 +770,16 @@ export default {
       }
 
       if (v.ngl.receptor) {
-        formData.append('receptor_pdb', v.componentToPdb(v.ngl.receptor))
+        formData.append('receptor', v.ngl.receptorName)
+//        formData.append('receptor_pdb', v.componentToPdb(v.ngl.receptor))
       } else {
         alert('Please provide the receptor!')
         return
       }
 
       if (v.ngl.ligand) {
-        formData.append('ligand_pdb', v.componentToPdb(v.ngl.ligand))
+        formData.append('ligand', v.ngl.ligandName)
+//        formData.append('ligand_pdb', v.componentToPdb(v.ngl.ligand))
       } else {
         alert('Please provide the ligand!')
         return
@@ -701,7 +794,7 @@ export default {
 
       axios({
         method: 'post',
-        url: v.$config.HOST + '/medusadock/static/submit.php',
+        url: v.$config.HOST + '/medusadock/actions/submit.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {
@@ -761,14 +854,16 @@ i.prompt {
 }
 
 #viewport {
-  width: 600px;
-  height: 500px;
-  margin: 0px auto;
+  width: 720px;
+  height: 450px;
+  margin: 0px auto 0px 0px;
+  box-shadow: 0 0 5px #888888;
 }
 
 #structure-name {
   font-size: 16px;
   color: rgb(180, 188, 204);
+  background-color: rgb(0, 0, 0, 0);
   position: absolute;
   left: 0;
   top: 0;
@@ -778,9 +873,9 @@ i.prompt {
 
 #cover {
   font-size: 30px;
-  width: 600px;
-  height: 500px;
-  line-height: 500px;
+  width: 720px;
+  height: 450px;
+  line-height: 450px;
   vertical-align: middle;
   text-align: center;
   color: rgb(180, 188, 204);

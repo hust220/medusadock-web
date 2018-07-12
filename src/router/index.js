@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
 import Home from '@/components/Home'
 import NewTask from '@/components/NewTask'
 import TaskManagement from '@/components/TaskManagement'
@@ -34,11 +33,6 @@ export default new Router({
       path: '/task/:id',
       name: 'Task',
       component: Task
-    },
-    {
-      path: '/hello',
-      name: 'HelloWorld',
-      component: HelloWorld
     }
   ]
 })

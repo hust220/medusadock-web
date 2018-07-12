@@ -7,9 +7,10 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import router from './router'
 import vueConfig from 'vue-config'
+import config from '../../config.json'
 
 const configs = {
-  HOST: 'http://' + window.location.hostname
+  HOST: config.host
 }
 
 Vue.config.productionTip = false

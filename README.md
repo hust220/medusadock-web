@@ -1,6 +1,6 @@
-# web-dokh-screening
+# MedusaDock
 
-> Drug screening service provided by Dokholyan Lab
+> Protein-ligand docking provided by Dokholyan Lab
 
 ## Build Setup
 

@@ -1,0 +1,10 @@
+{
+  "db": {
+    "host": "localhost",
+    "user": "dokhlab",
+    "password": "wait4me",
+    "database": "dokhlab"
+  }
+}
+
+

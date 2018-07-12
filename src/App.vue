@@ -1,98 +1,80 @@
 <template>
-<div @mouseup.preventDefault="draggable=false" @mousemove.preventDefault="dragMainWindow" id="app">
-  <!--<img src="./assets/logo.png">-->
+  <window>
   <user :visible.sync="userVisible"></user>
-
-  <div :style="mainStyle">
-    <div @dblclick="($store.state.view==='fullscreen'?$store.commit('viewWindow'):$store.commit('viewFullscreen'))" @mousedown.preventDefault="draggable=true" style="z-index: 98; position: absolute; height: 20px; width: 100%; left: 0px; right: 0px; top: 0px"></div>
-    <table>
+  <table>
     <tr>
-        <td class="nav unselectable">
-          <div class="nav-header">
-            <div style="font-size: 20px; float: left">MedusaDock v2.0</div>
-            <div @click="userVisible=true" style="float: right; cursor: pointer"><img width="15px" src="./assets/user.png"></div>
-            <div style="clear: both"></div>
-          </div>
-          <div class="nav-content">
-            <ul class="menu">
-              <li :class="['menu-item', active=='Home'?'is-active':'']" @click="active='Home';redirect('#/Home')">
-                <i class="el-icon-menu"></i>
-                <span>Introduction</span>
-              </li>
-              <li :class="['menu-item', active=='NewTask'?'is-active':'']" @click="active='NewTask';redirect('#/NewTask')">
-                <i class="el-icon-tickets"></i>
-                <span>New Task</span>
-              </li>
-              <li :class="['menu-item', active=='TaskManagement'?'is-active':'']" @click="active='TaskManagement';redirect('#/TaskManagement')">
-                <i class="el-icon-setting"></i>
-                <span>Task Management</span>
-              </li>
-              <li :class="['menu-item', active=='Task'?'is-active':'']" @click="active='Task';redirect('#/Task/'+task_id)" v-show="task_id">
-                <i class="el-icon-star-off"></i>
-                <span>Task {{task_id}}</span>
-              </li>
+      <td class="nav unselectable">
+        <div class="nav-header">
+          <div style="font-size: 20px; float: left">MedusaDock v2.0</div>
+          <div @click="userVisible=true" style="float: right; cursor: pointer"><img width="15px" src="./assets/user.png"></div>
+          <div style="clear: both"></div>
+        </div>
+        <div class="nav-content">
+          <ul class="menu">
+            <li :class="['menu-item', active=='Home'?'is-active':'']" @click="active='Home';redirect('#/Home')">
+              <i class="el-icon-menu"></i>
+              <span>Introduction</span>
+            </li>
+            <li :class="['menu-item', active=='NewTask'?'is-active':'']" @click="active='NewTask';redirect('#/NewTask')">
+              <i class="el-icon-tickets"></i>
+              <span>New Task</span>
+            </li>
+            <li :class="['menu-item', active=='TaskManagement'?'is-active':'']" @click="active='TaskManagement';redirect('#/TaskManagement')">
+              <i class="el-icon-setting"></i>
+              <span>Task Management</span>
+            </li>
+            <li :class="['menu-item', active=='Task'?'is-active':'']" @click="active='Task';redirect('#/Task/'+task_id)" v-show="task_id">
+              <i class="el-icon-star-off"></i>
+              <span>Task {{task_id}}</span>
+            </li>
 
-              <div class="submenu">
-                <li class="submenu-title menu-item" @click="show_submenu^=true">
-                  <i class="el-icon-plus"></i>
-                  <span>Other Services</span>
-                  <i class="submenu-arrow el-icon-arrow-up" v-if="show_submenu"></i>
-                  <i class="submenu-arrow el-icon-arrow-down" v-else></i>
+            <div class="submenu">
+              <li class="submenu-title menu-item" @click="show_submenu^=true">
+                <i class="el-icon-plus"></i>
+                <span>Other Services</span>
+                <i class="submenu-arrow el-icon-arrow-up" v-if="show_submenu"></i>
+                <i class="submenu-arrow el-icon-arrow-down" v-else></i>
+              </li>
+              <ul class="submenu-list" v-show="show_submenu">
+                <li class="menu-item" @click="redirect($config.HOST + '/eris')">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>Eris</span>
                 </li>
-                <ul class="submenu-list" v-show="show_submenu">
-                  <li class="menu-item" @click="redirect($config.HOST + '/eris')">
-                    <i class="el-icon-arrow-right"></i>
-                    <span>Eris</span>
-                  </li>
-                  <li class="menu-item" @click="redirect($config.HOST + '/chiron')">
-                    <i class="el-icon-arrow-right"></i>
-                    <span>Chiron</span>
-                  </li>
-                  <li class="menu-item" @click="redirect($config.HOST + '/ifold')">
-                    <i class="el-icon-arrow-right"></i>
-                    <span>iFold</span>
-                  </li>
-                  <li class="menu-item" @click="redirect($config.HOST + '/ifoldrna')">
-                    <i class="el-icon-arrow-right"></i>
-                    <span>iFoldRNA</span>
-                  </li>
-                  <li class="menu-item" @click="redirect($config.HOST + '/drugdisco')">
-                    <i class="el-icon-arrow-right"></i>
-                    <span>DrugDisco</span>
-                  </li>
-                </ul>
-              </div>
+                <li class="menu-item" @click="redirect($config.HOST + '/chiron')">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>Chiron</span>
+                </li>
+                <li class="menu-item" @click="redirect($config.HOST + '/ifold')">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>iFold</span>
+                </li>
+                <li class="menu-item" @click="redirect($config.HOST + '/ifoldrna')">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>iFoldRNA</span>
+                </li>
+                <li class="menu-item" @click="redirect($config.HOST + '/drugdisco')">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>DrugDisco</span>
+                </li>
+              </ul>
+            </div>
 
-              <li class="menu-item" @click="redirect($config.HOST)">
-                <i class="el-icon-location"></i>
-                <span>Dokholyan Lab</span>
-              </li>
-            </ul>
-          </div>
-        </td>
-          <!--
-          </el-col>
+            <li class="menu-item" @click="redirect($config.HOST)">
+              <i class="el-icon-location"></i>
+              <span>Dokholyan Lab</span>
+            </li>
+          </ul>
+        </div>
+      </td>
 
-          <el-col :span="18">
-          -->
-        <td class="content">
-          <div v-if="$store.state.view==='fullscreen'" class="zoom" @click="$store.commit('viewWindow')"><i class="el-icon-remove-outline"></i></div>
-          <div v-if="$store.state.view==='window'" class="zoom" @click="$store.commit('viewFullscreen')"><i class="el-icon-circle-plus-outline"></i></div>
-          <div class="content-content">
-            <router-view/>
-          </div>
-        </td>
+      <td class="content">
+        <div class="content-content">
+          <router-view/>
+        </div>
+      </td>
     </tr>
   </table>
-</div>
-          <!--
-          </el-col>
-        </el-row> 
-      </el-card>
-    </el-col>
-  </el-row>
-  -->
-</div>
+  </window>
 </template>
 
 <script>
@@ -100,6 +82,7 @@ import { bus } from '@/bus.js'
 import Login from '@/components/Login'
 import SignUp from '@/components/SignUp'
 import User from '@/components/User'
+import Window from '@/components/Window'
 
 export default {
   name: 'app',
@@ -114,50 +97,47 @@ export default {
       task_id: ''
     }
   },
-  computed: {
-    mainStyle () {
-      var v = this
-      if (v.$store.state.view === 'fullscreen') {
-        return {
-          position: 'absolute',
-          left: '0px',
-          top: '0px',
-          right: '0px',
-          bottom: '0px'
-        }
-      } else {
-        return {
-          width: '1000px',
-          height: '600px',
-          position: 'absolute',
-          top: `${v.top}px`,
-          left: `${v.left}px`
-        }
-      }
-    }
-  },
+//  computed: {
+//    mainStyle () {
+//      var v = this
+//      if (v.$store.state.view === 'fullscreen') {
+//        return {
+//          position: 'absolute',
+//          left: '0px',
+//          top: '0px',
+//          right: '0px',
+//          bottom: '0px'
+//        }
+//      } else {
+//        return {
+//          width: '1000px',
+//          height: '600px',
+//          position: 'absolute',
+//          top: `${v.top}px`,
+//          left: `${v.left}px`
+//        }
+//      }
+//    }
+//  },
   components: {
     Login,
     SignUp,
-    User
+    User,
+    Window
   },
   methods: {
     redirect (url) {
       window.location.href = url
-    },
-    dragMainWindow (e) {
-      var v = this
-      if (v.draggable) {
-//        console.log(document.body.clientHeight)
-//        console.log(document.body.clientWidth)
-        v.left += e.movementX
-        v.top += e.movementY
-        if (v.left < 0) v.left = 0
-        if (v.top < 0) v.top = 0
-//        console.log(`${e.movementX}-${e.movementY} ${v.left}-${v.top}`)
-      }
     }
-
+//    dragMainWindow (e) {
+//      var v = this
+//      if (v.draggable) {
+//        v.left += e.movementX
+//        v.top += e.movementY
+//        if (v.left < 0) v.left = 0
+//        if (v.top < 0) v.top = 0
+//      }
+//    }
   },
   mounted () {
     var v = this
@@ -177,7 +157,7 @@ export default {
 
 <style>
 html {
-  overflow-y: scroll;
+  overflow-y: auto;
   width: 100%;
   height: 100%;
   background: url(http://old.bz55.com/uploads/allimg/140729/1-140HZ92039.jpg) no-repeat 50%;
@@ -217,6 +197,7 @@ tr {
 .nav {
   height: 100%;
   width: 250px;
+  min-width: 250px;
   background: #2e3238;
   color: white;
   padding: 0px;
@@ -233,7 +214,7 @@ tr {
   background-color: white;
   align: center;
   padding: 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
   position: relative;
   background-image: url('./assets/intro-bg.png');
   background-repeat: no-repeat;
@@ -247,6 +228,7 @@ tr {
   margin: 0px auto;
 }
 
+/*
 .zoom {
   position: absolute;
   right: 5px;
@@ -256,6 +238,7 @@ tr {
   cursor: pointer;
   z-index: 99;
 }
+*/
 
 .left-nav {
   margin-bottom: 0px;

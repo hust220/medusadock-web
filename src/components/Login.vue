@@ -1,6 +1,6 @@
 <template>
   <el-dialog title="Login" :visible="visible" @update:visible="updateVisible">
-    <el-form @keyup.enter.native="submit" :model="form">
+    <el-form label-position="right" @keyup.enter.native="submit" :model="form">
       <el-form-item label="User Name" label-width="150">
         <el-input v-model="form.username" auto-complete="off"></el-input>
       </el-form-item>
@@ -49,7 +49,7 @@ export default {
 
       axios({
         method: 'post',
-        url: v.$config.HOST + '/medusadock/static/login.php',
+        url: v.$config.HOST + '/medusadock/actions/login.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {

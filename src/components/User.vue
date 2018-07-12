@@ -18,12 +18,12 @@
     </div>
 
     <div v-if="!$store.state.user">
-      <el-form @keyup.enter.native="submit" :model="form">
-        <el-form-item label="User Name" label-width="150">
+      <el-form @keyup.enter.native="submit" :model="form" label-width="120px" label-position="left">
+        <el-form-item label="User Name">
           <el-input v-model="form.username" auto-complete="off"></el-input>
         </el-form-item>
 
-        <el-form-item label="Password" label-width="150">
+        <el-form-item label="Password">
           <el-input type="password" v-model="form.password" auto-complete="off"></el-input>
         </el-form-item>
       </el-form>
@@ -87,7 +87,7 @@ export default {
 
       axios({
         method: 'post',
-        url: v.$config.HOST + '/medusadock/static/login.php',
+        url: v.$config.HOST + '/medusadock/actions/login.php',
         data: formData,
         config: {headers: {'Content-Type': 'multipart/form-data'}}
       }).then(response => {
