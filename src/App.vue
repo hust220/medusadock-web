@@ -160,7 +160,7 @@ html {
   overflow-y: auto;
   width: 100%;
   height: 100%;
-  background: url(http://old.bz55.com/uploads/allimg/140729/1-140HZ92039.jpg) no-repeat 50%;
+  background: url('./assets/app-bg.jpg') no-repeat 50%;
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
