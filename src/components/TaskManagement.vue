@@ -17,10 +17,10 @@
         <td v-text="task.tprocess"></td>
         <td v-text="task.tfinish"></td>
         <td>
-          <div v-html="queuedStatus" v-if="task.status==='queued'"></div>
-          <div v-html="failedStatus" v-else-if="task.status==='failed'"></div>
+          <div v-if="task.status==='queued'"><i>Queued</i></div>
+          <div v-else-if="task.status==='failed'"><i>Failed</i></div>
           <div v-html="finishedStatus(task.id)" v-else-if="task.status==='finished'"></div>
-          <div v-html="runningStatus" v-else></div>
+          <div v-else><i style="margin-left: 10px" class="el-icon-loading"></i></div>
         </td>
       </tr>
     </tbody>
@@ -42,10 +42,10 @@
     <el-table-column prop="tfinish" label="Finish Time"></el-table-column>
     <el-table-column prop="status" label="Status">
       <template slot-scope="scope">
-        <div v-html="queuedStatus" v-if="scope.row.status==='queued'"></div>
-        <div v-html="failedStatus" v-else-if="scope.row.status==='failed'"></div>
+        <div v-if="scope.row.status==='queued'"><i>Queued</i></div>
+        <div v-else-if="scope.row.status==='failed'"><i>Failed</i></div>
         <div v-html="finishedStatus(scope.row.id)" v-else-if="scope.row.status==='finished'"></div>
-        <div v-html="runningStatus" v-else></div>
+        <div v-else><i style="margin-left: 10px" class="el-icon-loading"></i></div>
       </template>
     </el-table-column>
   </el-table>
@@ -63,8 +63,6 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
-      queuedStatus: '<i>Queued</i>',
-      failedStatus: '<i>Failed</i>',
       runningStatus: '<i style="margin-left: 10px" class="el-icon-loading"></i>',
       tasks: [],
       intervalId: 0
